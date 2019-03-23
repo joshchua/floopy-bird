@@ -2,9 +2,11 @@
   "name": "floopy-bird",
   "version": "0.0.1",
   "description": "Another Flappy Bird clone, but in 3D, first person view made with Three.js",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start:dev": "webpack-dev-server"
   },
   "repository": {
     "type": "git",
@@ -17,12 +19,20 @@
   },
   "homepage": "https://github.com/joshchua/floopy-bird#readme",
   "devDependencies": {
-    "webpack": "^4.29.6"
+    "css-loader": "^2.1.1",
+    "html-webpack-plugin": "^3.2.0",
+    "node-sass": "^4.11.0",
+    "sass-loader": "^7.1.0",
+    "style-loader": "^0.23.1",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.3.4000",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.2.1"
   },
   "dependencies": {
     "@tweenjs/tween.js": "^17.3.0",
-    "install": "^0.12.2",
-    "npm": "^6.9.0",
+    "immutable": "^4.0.0-rc.12",
     "rxjs": "^6.4.0",
     "three": "^0.102.1"
   }
