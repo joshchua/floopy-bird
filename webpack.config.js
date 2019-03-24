@@ -17,11 +17,18 @@ module.exports = {
                     'css-loader',
                     'sass-loader'
                 ]
+            },
+            {
+                test: /three\/examples\/js/,
+                use: 'imports-loader?THREE=three'
             }
         ]
     },
     resolve: {
-        extensions: [ '.tsx', '.ts', '.js' ]
+        extensions: [ '.tsx', '.ts', '.js' ],
+        alias: {
+            'three-examples': path.join(__dirname, './node_modules/three/examples/js')
+        }
     },
     plugins: [
         new HtmlWebpackPlugin({

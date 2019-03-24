@@ -1,5 +1,10 @@
 {
     "compilerOptions": {
-      "sourceMap": true
-    }
+      "sourceMap": true,
+      "baseUrl": "."
+    },
+    "exclude": [
+        "**/*/Three.d.ts"
+    ]
+    
 }
