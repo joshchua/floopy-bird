@@ -1,8 +1,7 @@
 import './../sass/index.sass';
 
-import { interval, animationFrameScheduler, Observable, fromEvent } from 'rxjs';
-import { scan } from 'rxjs/operators';
-import { fromJS, Map } from 'immutable';
+import { interval, animationFrameScheduler, Observable, fromEvent, merge } from 'rxjs';
+import { scan, withLatestFrom, map, startWith } from 'rxjs/operators';
 
 import * as THREE from 'three';
 import 'three-examples/controls/OrbitControls';
@@ -12,8 +11,24 @@ interface Tick {
     delta: number
 }
 
-interface GameInput {
+interface InputState {
     pressed: boolean
+}
+
+interface Player {
+    position: number
+}
+
+interface Pipe {
+    distance: number,
+    gapPosition: number
+}
+
+interface GameState {
+    state: string,
+    player: Player,
+    pipes: Pipe[],
+    score: number
 }
 
 /**
@@ -21,23 +36,18 @@ interface GameInput {
  * 
  * @returns The clock observable
  */
-function createClock(): Observable<Map<string, Tick>> {
-    const start: Tick = {
-        time: performance.now(),
-        delta: 0
-    };
-
-    const state = fromJS(start);    
-
+function createClock(): Observable<Tick> {
     return interval(0, animationFrameScheduler).pipe(
-        scan((prev) => {
-            const time = performance.now();
-            let tick: Tick = {
-                time: time,
-                delta: time - prev.get('time')
-            };
-            return state.merge(tick);
-        }, state)
+        map(() => {
+            return {
+                time: performance.now(),
+                delta: 0
+            }
+        }),
+        scan((previous, current) => ({
+            time: performance.now(),
+            delta: current.time - previous.time
+        }))
     );
 }
 
@@ -46,23 +56,16 @@ function createClock(): Observable<Map<string, Tick>> {
  * 
  * @returns The game input observable
  */
-function createInputObservable(): Observable<Map<string, GameInput>> {
-    const input: GameInput = {
-        pressed: false
-    };
-
-    const state = fromJS(input);
-
-    return fromEvent(document, 'keypress').pipe(
-        scan((previous, event: KeyboardEvent) => {
-            if (event.keyCode == 32) {
-                previous.update('pressed', () => true);
-            } else {
-                previous.update('pressed', () => false);
-            }
-            return previous;
-        }, state)
-    )
+function createInputObservable(): Observable<InputState> {
+    return merge(
+        fromEvent(document, 'keydown').pipe(
+            map<Event, boolean>((event: KeyboardEvent) => {
+                return false;
+            })
+        )
+    ).pipe(
+        map<boolean, InputState>((b) => ({pressed: b}))
+    );
 }
 
 /**
@@ -105,6 +108,19 @@ function initGraphics(): void {
     }
     animate();
 }
+
+function createGame() {
+    const clock = createClock();
+    const input = createInputObservable().pipe(
+        startWith(({pressed: false}))
+    );
+
+    const events = clock.pipe(withLatestFrom(input));
+    //events.subscribe((x) => console.log(x));
+
+}
+
+createGame();
 
 //let clock = createClock();
 initGraphics();
