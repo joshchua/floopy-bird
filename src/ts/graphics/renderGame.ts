@@ -26,7 +26,11 @@ export function renderGame() {
 
     let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+    let gridHelper = new THREE.GridHelper(400, 40);
+    scene.add(gridHelper);
+
     let pipe = new Pipe(10);
+    pipe.position.z = 5;
     scene.add(pipe);
 
     let world = new World();
@@ -41,7 +45,7 @@ export function renderGame() {
     scene.add(ambientLight);
 
     camera.position.z = 20;
-    camera.position.y = 10;
+    camera.position.y = 30;
     controls.update();
 
     window.addEventListener('resize', () => {
