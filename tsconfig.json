@@ -2,9 +2,5 @@
     "compilerOptions": {
       "sourceMap": true,
       "baseUrl": "."
-    },
-    "exclude": [
-        "**/*/Three.d.ts"
-    ]
-    
+    }
 }

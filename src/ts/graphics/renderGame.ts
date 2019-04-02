@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import 'three-examples/controls/OrbitControls';
 import { GameState } from '../game/models/GameState';
+import { Pipe } from './meshes/Pipe';
+import { World } from './meshes/World';
 
 
 export function renderGame() {
@@ -9,6 +11,7 @@ export function renderGame() {
     document.body.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x2cb9e8);
 
     const camera = new THREE.PerspectiveCamera(
         75,
@@ -17,14 +20,28 @@ export function renderGame() {
         1000
     );
 
-    let controls = new THREE.OrbitControls(camera, renderer.domElement);
-    
-    var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-    var cube = new THREE.Mesh(geometry, material);
-    scene.add( cube );
+    let axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
 
-    camera.position.z = 5;
+
+    let controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    let pipe = new Pipe(10);
+    scene.add(pipe);
+
+    let world = new World();
+    scene.add(world);
+
+    var directionalLight = new THREE.DirectionalLight( 0xFFFFFF, 1 );
+    directionalLight.position.set( 0, 100, 20 );
+    directionalLight.castShadow = true;
+    scene.add( directionalLight ); 
+
+    var ambientLight = new THREE.AmbientLight( 0x404040 );
+    scene.add(ambientLight);
+
+    camera.position.z = 20;
+    camera.position.y = 10;
     controls.update();
 
     window.addEventListener('resize', () => {
