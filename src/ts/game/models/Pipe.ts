@@ -1,4 +1,4 @@
 export interface Pipe {
-    distance: number,
-    gapPosition: number
+  distance: number;
+  gapPosition: number;
 }

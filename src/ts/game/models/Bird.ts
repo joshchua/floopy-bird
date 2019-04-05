@@ -1,3 +1,3 @@
 export interface Bird {
-    position: number
+  position: number;
 }

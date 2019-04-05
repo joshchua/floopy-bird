@@ -1,3 +1,3 @@
 export interface InputState {
-    pressed: boolean
+  pressed: boolean;
 }

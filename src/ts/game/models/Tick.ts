@@ -1,4 +1,4 @@
 export interface Tick {
-    time: DOMHighResTimeStamp,
-    delta: number
+  time: DOMHighResTimeStamp;
+  delta: number;
 }
