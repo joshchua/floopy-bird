@@ -3,10 +3,11 @@ import 'three-examples/controls/OrbitControls';
 import { GameState } from '../game/models/GameState';
 import { Pipe } from './meshes/Pipe';
 import { World } from './meshes/World';
+import { Cloud } from './meshes/Cloud';
 
 
 export function renderGame() {
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
@@ -32,6 +33,10 @@ export function renderGame() {
     let pipe = new Pipe(10);
     pipe.position.z = 5;
     scene.add(pipe);
+
+    let cloud = new Cloud(10, 8, 2);
+    cloud.position.y = 20;
+    scene.add(cloud);
 
     let world = new World();
     scene.add(world);
