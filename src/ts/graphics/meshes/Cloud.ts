@@ -30,10 +30,15 @@ export class Cloud extends THREE.Group {
       })
     );
 
-    const map = (val, smin, smax, emin, emax) =>
-      ((emax - emin) * (val - smin)) / (smax - smin) + emin;
+    const map = (
+      val: number,
+      smin: number,
+      smax: number,
+      emin: number,
+      emax: number
+    ) => ((emax - emin) * (val - smin)) / (smax - smin) + emin;
     //randomly displace the x,y,z coords by the `per` value
-    const jitter = (geo, per) =>
+    const jitter = (geo: THREE.Geometry, per: number) =>
       geo.vertices.forEach(v => {
         v.x += map(Math.random(), 0, 1, -per, per);
         v.y += map(Math.random(), 0, 1, -per, per);
@@ -42,8 +47,8 @@ export class Cloud extends THREE.Group {
 
     jitter(geo, jitterDistance);
 
-    const chopBottom = (geo, bottom) =>
-      geo.vertices.forEach(v => (v.y = Math.max(v.y, bottom)));
+    const chopBottom = (geo: THREE.Geometry, bottom: number) =>
+      geo.vertices.forEach((v: THREE.Vector3) => (v.y = Math.max(v.y, bottom)));
     chopBottom(geo, -0.5);
 
     this.add(cloud);

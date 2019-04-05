@@ -41,6 +41,17 @@ function createHill(props: HillProps, pos: Position): Hill {
   return hill;
 }
 
+interface MountainProps extends HillProps {}
+
+function createMountain(props: MountainProps, pos: Position): THREE.Mesh {
+  let geometry = new THREE.ConeBufferGeometry(props.radius, props.height, 32);
+  let material = new THREE.MeshLambertMaterial({ color: props.color });
+  let mountian = new THREE.Mesh(geometry, material);
+  mountian.position.x = pos.x;
+  mountian.position.z = pos.z;
+  return mountian;
+}
+
 function createCloud(pos: Position): Cloud {
   let cloud = new Cloud(20, 18, 2);
   cloud.position.x = pos.x;
