@@ -1,58 +1,87 @@
 import * as THREE from 'three';
 import { Hill } from './Hill';
+import { Cloud } from './Cloud';
 const Ground = require('../../../assets/textures/ground.png');
+
+interface Position {
+    x?: number,
+    y?: number,
+    z?: number
+}
+
+function createPlane(width: number, length: number): THREE.Mesh {
+    let texture = new THREE.TextureLoader().load(Ground);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.LinearMipMapLinearFilter;
+    texture.repeat.set(20, 20);
+
+    let geometry = new THREE.PlaneBufferGeometry( width, length, 32 );
+    let material = new THREE.MeshLambertMaterial( {color: 0xffffff, side: THREE.DoubleSide, map: texture} );
+    let plane = new THREE.Mesh( geometry, material );
+    plane.rotateX(Math.PI / 2);
+    return plane;
+}
+
+interface HillProps {
+    radius: number,
+    height: number,
+    color: number
+}
+
+function createHill(props: HillProps, pos: Position): Hill {
+    let hill = new Hill(props.radius, props.height, props.color);
+    hill.position.x = pos.x;
+    hill.position.z = pos.z;
+    return hill;
+}
+
+function createCloud(pos: Position): Cloud {
+    let cloud = new Cloud(20, 18, 2);
+    cloud.position.x = pos.x;
+    cloud.position.y = pos.y;
+    cloud.position.z = pos.z;
+    return cloud;
+}
 
 export class World extends THREE.Group {
     constructor() {
         super();
 
-        function createPlane() {
-            let texture = new THREE.TextureLoader().load(Ground);
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.magFilter = THREE.NearestFilter;
-            texture.minFilter = THREE.LinearMipMapLinearFilter;
-            texture.repeat.set( 20, 20 );
-
-            let geometry = new THREE.PlaneBufferGeometry( 400, 400, 32 );
-            let material = new THREE.MeshLambertMaterial( {color: 0xffffff, side: THREE.DoubleSide, map: texture} );
-            let plane = new THREE.Mesh( geometry, material );
-            plane.rotateX(Math.PI / 2);
-            return plane;
-        }
-
-        function createHills() {
-            let hillProps  = [
-                [20, 30, 0x287256],
-                [15, 20, 0x287256],
-                [15, 20, 0x287256],
-                [18, 28, 0x287256],
-                [18, 28, 0x287256],
-                [18, 28, 0x287256]
-            ];
-
-            let hillPos = [
-                [50, -100],
-                [50, -80],
-                [-60, -75],
-                [-100, -100],
-                [-80, -50],
-                [60, -40]
-            ];
-
-            let hills: Array<Hill> = [];
-            hillProps.forEach((p, i) => {
-                let hill = new Hill(p[0], p[1], p[2]);
-                let pos = hillPos[i];
-                hill.position.x = pos[0];
-                hill.position.z = pos[1];
-                hills.push(hill);
-            }, this);
-            return hills;
-        }
-        
-        
-        createHills().forEach(h => this.add(h), this);
-        this.add(createPlane());
+        this.add(
+            createPlane(400, 400),
+            createHill({
+                radius: 20,
+                height: 30,
+                color: 0x287256
+            }, { x: 50, z: -100 }),
+            createHill({
+                radius: 15,
+                height: 20,
+                color: 0x287256
+            }, { x: 50, z: -80 }),
+            createHill({
+                radius: 15,
+                height: 20,
+                color: 0x287256
+            }, { x: -60, z: -75 }),
+            createHill({
+                radius: 18,
+                height: 28,
+                color: 0x287256
+            }, { x: -100, z: -100 }),
+            createHill({
+                radius: 18,
+                height: 28,
+                color: 0x287256
+            }, { x: -80, z: -50 }),
+            createHill({
+                radius: 18,
+                height: 28,
+                color: 0x287256
+            }, { x: 60, z: -40 }),
+            createCloud({x: 50, y: 50, z: 50})
+        );
     }
 }
