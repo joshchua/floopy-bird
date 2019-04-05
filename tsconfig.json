@@ -1,6 +1,6 @@
 {
-    "compilerOptions": {
-      "sourceMap": true,
-      "baseUrl": "."
-    }
+  "compilerOptions": {
+    "sourceMap": true,
+    "baseUrl": "."
+  }
 }
