@@ -3,6 +3,7 @@ import "three-examples/controls/OrbitControls";
 import { GameState } from "../game/models/GameState";
 import { Pipe } from "./meshes/Pipe";
 import { World } from "./meshes/World";
+import { Bird } from "./meshes/Bird";
 
 export function renderGame() {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -24,12 +25,16 @@ export function renderGame() {
 
   let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-  let gridHelper = new THREE.GridHelper(400, 40);
-  scene.add(gridHelper);
+  // let gridHelper = new THREE.GridHelper(400, 40);
+  // scene.add(gridHelper);
 
   let pipe = new Pipe(10);
-  pipe.position.z = 100;
+  pipe.position.x = 30;
   scene.add(pipe);
+
+  let bird = new Bird(15);
+  bird.position.y = 10;
+  scene.add(bird);
 
   let world = new World();
   scene.add(world);
