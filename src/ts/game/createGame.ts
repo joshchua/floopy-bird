@@ -5,7 +5,14 @@ import {
   fromEvent,
   merge
 } from "rxjs";
-import { scan, withLatestFrom, map, startWith } from "rxjs/operators";
+import {
+  scan,
+  withLatestFrom,
+  map,
+  startWith,
+  take,
+  combineLatest
+} from "rxjs/operators";
 
 import { Tick } from "./models/Tick";
 import { InputState } from "./models/InputState";
@@ -35,7 +42,7 @@ function createClock(): Observable<Tick> {
  *
  * @returns The game input observable
  */
-function createInputObservable(): Observable<InputState> {
+const createInputObservable = (): Observable<InputState> => {
   return merge(
     fromEvent(document, "keydown").pipe(
       map<Event, boolean>((event: KeyboardEvent) => {
@@ -43,19 +50,23 @@ function createInputObservable(): Observable<InputState> {
       })
     )
   ).pipe(map<boolean, InputState>(b => ({ pressed: b })));
-}
+};
 
 /**
  * Sets up the initial Three.js scene, camera, and objects
  */
-function createGame() {
+const createGame = () => {
   const clock = createClock();
   const input = createInputObservable().pipe(startWith({ pressed: false }));
 
-  const events = clock.pipe(withLatestFrom(input));
-  //events.subscribe((x) => console.log(x));
+  const events = clock.pipe(
+    combineLatest(input),
+    map(([clock, input]) => ({ clock: clock, input: input }))
+  );
+
+  events.pipe(take(10)).subscribe(x => console.log(x));
 
   return events;
-}
+};
 
 export { createGame };

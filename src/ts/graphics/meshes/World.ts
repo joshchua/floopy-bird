@@ -9,7 +9,7 @@ interface Position {
   z?: number;
 }
 
-function createPlane(width: number, length: number): THREE.Mesh {
+const createPlane = (width: number, length: number): THREE.Mesh => {
   let texture = new THREE.TextureLoader().load(Ground);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
@@ -34,7 +34,7 @@ interface HillProps {
   color: number;
 }
 
-function createHill(props: HillProps, pos: Position): Hill {
+const createHill = (props: HillProps, pos: Position): Hill => {
   let hill = new Hill(props.radius, props.height, props.color);
   hill.position.x = pos.x;
   hill.position.z = pos.z;
@@ -43,7 +43,7 @@ function createHill(props: HillProps, pos: Position): Hill {
 
 interface MountainProps extends HillProps {}
 
-function createMountain(props: MountainProps, pos: Position): THREE.Mesh {
+const createMountain = (props: MountainProps, pos: Position): THREE.Mesh => {
   let geometry = new THREE.ConeBufferGeometry(props.radius, props.height, 32);
   let material = new THREE.MeshLambertMaterial({ color: props.color });
   let mountian = new THREE.Mesh(geometry, material);
@@ -52,7 +52,7 @@ function createMountain(props: MountainProps, pos: Position): THREE.Mesh {
   return mountian;
 }
 
-function createCloud(pos: Position): Cloud {
+const createCloud = (pos: Position): Cloud => {
   let cloud = new Cloud(20, 18, 2);
   cloud.position.x = pos.x;
   cloud.position.y = pos.y;

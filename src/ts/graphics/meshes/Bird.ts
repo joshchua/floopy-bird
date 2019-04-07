@@ -1,31 +1,31 @@
 import * as THREE from "three";
 
-function createCube(size: number): THREE.BoxGeometry {
+const createCube = (size: number): THREE.BoxGeometry => {
   let geometry = new THREE.BoxGeometry(size, size, size);
   return geometry;
-}
+};
 
-function createPixelArtCell(
+const createPixelArtCell = (
   size: number,
   x: number,
   y: number
-): THREE.BoxGeometry {
+): THREE.BoxGeometry => {
   let cell = createCube(size);
   cell.translate(x * size, y * size, 0);
   return cell;
-}
+};
 
-function createPixelArtMesh(
+const createPixelArtMesh = (
   cells: THREE.BoxGeometry[],
   color: number
-): THREE.Mesh {
+): THREE.Mesh => {
   let geometry = new THREE.Geometry();
   cells.forEach(cell => geometry.merge(cell), this);
   geometry.mergeVertices();
   const material = new THREE.MeshLambertMaterial({ color: color });
   const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
   return new THREE.Mesh(bufferGeometry, material);
-}
+};
 
 export class Bird extends THREE.Group {
   constructor(width: number) {

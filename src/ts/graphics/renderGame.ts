@@ -5,7 +5,7 @@ import { Pipe } from "./meshes/Pipe";
 import { World } from "./meshes/World";
 import { Bird } from "./meshes/Bird";
 
-export function renderGame() {
+const renderGame = () => {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
@@ -70,4 +70,6 @@ export function renderGame() {
     controls.update();
     renderer.render(scene, camera);
   };
-}
+};
+
+export { renderGame };
