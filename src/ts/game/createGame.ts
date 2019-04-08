@@ -17,13 +17,15 @@ import {
 import { Tick } from "./models/Tick";
 import { InputState } from "./models/InputState";
 
+const update = () => {
+
+};
+
 /**
- * Creates a clock observable
- *
- * @returns The clock observable
+ * Sets up the initial Three.js scene, camera, and objects
  */
-function createClock(): Observable<Tick> {
-  return interval(0, animationFrameScheduler).pipe(
+const createGame = () => {
+  const clock = interval(0, animationFrameScheduler).pipe(
     map(() => {
       return {
         time: performance.now(),
@@ -35,29 +37,17 @@ function createClock(): Observable<Tick> {
       delta: current.time - previous.time
     }))
   );
-}
 
-/**
- * Creates an observable of game inputs
- *
- * @returns The game input observable
- */
-const createInputObservable = (): Observable<InputState> => {
-  return merge(
+  const input = merge(
     fromEvent(document, "keydown").pipe(
       map<Event, boolean>((event: KeyboardEvent) => {
         return false;
       })
     )
-  ).pipe(map<boolean, InputState>(b => ({ pressed: b })));
-};
-
-/**
- * Sets up the initial Three.js scene, camera, and objects
- */
-const createGame = () => {
-  const clock = createClock();
-  const input = createInputObservable().pipe(startWith({ pressed: false }));
+  ).pipe(
+    map<boolean, InputState>(b => ({ pressed: b })),
+    startWith({ pressed: false })
+  );
 
   const events = clock.pipe(
     combineLatest(input),
