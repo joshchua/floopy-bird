@@ -1,4 +1,4 @@
-import "./../sass/index.sass";
+import "./../scss/index.scss";
 import { createGame } from "./game/createGame";
 import { renderGame } from "./graphics/renderGame";
 
