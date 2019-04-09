@@ -69,6 +69,10 @@ const renderGame = () => {
   return (state: any) => {
     controls.update();
     renderer.render(scene, camera);
+
+    if (state["scene"] == "main-menu") {
+      bird.position.y = state["bird"].y;
+    }
   };
 };
 

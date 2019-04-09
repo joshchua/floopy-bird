@@ -1,3 +1,5 @@
 export interface Bird {
-  position: number;
+  y: number;
+  fallSpeed: number;
+  ySpeed: number;
 }

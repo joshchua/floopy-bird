@@ -11,7 +11,11 @@ canvas {
   display: block;
 }
 
-div {
+.hidden {
+  display: none;
+}
+
+.gameOver {
   display: none;
 }
 

@@ -3,7 +3,9 @@ import {
   animationFrameScheduler,
   Observable,
   fromEvent,
-  merge
+  merge,
+  BehaviorSubject,
+  of
 } from "rxjs";
 import {
   scan,
@@ -16,15 +18,35 @@ import {
 
 import { Tick } from "./models/Tick";
 import { InputState } from "./models/InputState";
+import { GameState } from "./models/GameState";
+import { Bird } from "./models/Bird";
 
-const update = () => {
-
-};
+const update = () => {};
 
 /**
- * Sets up the initial Three.js scene, camera, and objects
+ * Creates an Observable of game states
+ *
+ * @returns Observable of game states
  */
 const createGame = () => {
+  const scene = new BehaviorSubject("main-menu");
+
+  fromEvent(document.querySelector(".mainMenu .startGame"), "click").subscribe(
+    () => scene.next("game")
+  );
+
+  fromEvent(document.querySelector(".mainMenu .github"), "click").subscribe(
+    () => (window.location.href = "https://github.com/joshchua/floopy-bird")
+  );
+
+  scene.subscribe(s => {
+    if (s == "game") {
+      document
+        .getElementsByClassName("mainMenu")[0]
+        .setAttribute("class", "hidden");
+    }
+  });
+
   const clock = interval(0, animationFrameScheduler).pipe(
     map(() => {
       return {
@@ -41,6 +63,11 @@ const createGame = () => {
   const input = merge(
     fromEvent(document, "keydown").pipe(
       map<Event, boolean>((event: KeyboardEvent) => {
+        return true;
+      })
+    ),
+    fromEvent(document, "keyup").pipe(
+      map<Event, boolean>((event: KeyboardEvent) => {
         return false;
       })
     )
@@ -49,10 +76,39 @@ const createGame = () => {
     startWith({ pressed: false })
   );
 
-  const events = clock.pipe(
-    combineLatest(input),
-    map(([clock, input]) => ({ clock: clock, input: input }))
+  let b: Bird = {
+    y: 10,
+    fallSpeed: 0,
+    ySpeed: 0
+  };
+
+  let bird = of(b).pipe(
+    combineLatest(clock, input),
+    map(([bird, clock, input]) => {
+      if (input.pressed == true) {
+        bird.fallSpeed = 0;
+        bird.ySpeed = -.2;
+      }
+
+      bird.fallSpeed += .01;
+      bird.y -= bird.fallSpeed + bird.ySpeed;
+      return bird;
+    })
   );
+
+  const events = clock.pipe(
+    combineLatest(scene, input, bird),
+    map(([clock, scene, input, bird]) => ({
+      clock: clock,
+      scene: scene,
+      input: input,
+      bird: bird
+    }))
+  );
+
+  
+
+  events.subscribe(x => console.log(x));
 
   events.pipe(take(10)).subscribe(x => console.log(x));
 
