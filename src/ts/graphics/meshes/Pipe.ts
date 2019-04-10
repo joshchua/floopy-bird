@@ -34,13 +34,30 @@ const createCylinder = (height: number, material: THREE.MeshPhongMaterial) => {
 };
 
 export class Pipe extends THREE.Group {
+  height: number;
+  top: THREE.Mesh;
+  cylinder: THREE.Mesh;
+
   constructor(height: number) {
     super();
 
     let material = new THREE.MeshPhongMaterial({
       color: 0x04dd37
     });
+    this.height = height;
+    this.top = createTop(height, material);
+    this.cylinder = createCylinder(height, material);
 
-    this.add(createTop(height, material), createCylinder(height, material));
+    this.add(this.top, this.cylinder);
+  }
+
+  changeHeight(height: number) {
+    const scale = height / this.height;
+    this.cylinder.position.y -=  100;
+    this.cylinder.scale.set(1, scale, 1);
+    
+    //this.top.position.y = height;
+    
+    this.height = height;
   }
 }

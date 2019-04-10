@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import "three-examples/controls/OrbitControls";
 import { GameState } from "../game/models/GameState";
-import { Pipe } from "./meshes/Pipe";
 import { World } from "./meshes/World";
+import { PipeSet } from "./meshes/PipeSet";
+import { Pipe } from "./meshes/Pipe";
 import { Bird } from "./meshes/Bird";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -51,7 +52,10 @@ scene.add(world);
 
 const bird = new Bird(15);
 bird.position.y = 10;
-scene.add(bird);
+//scene.add(bird);
+
+let pipeSet = new PipeSet(100, 20, 30);
+scene.add(pipeSet);
 
 let pipeBuffer: Pipe[] = [];
 for (let i = 0; i < 7; i++) pipeBuffer.push(new Pipe(10));
