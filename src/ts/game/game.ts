@@ -80,13 +80,14 @@ const bird$ = combineLatest(of(initBird), clock$, input$).pipe(
   })
 );
 
-const createPipe = (): Pipe => ({
+const createPipe = (id: number): Pipe => ({
+  id: id,
   distance: 300,
   gapPosition: Math.floor(Math.random() * MAX_HEIGHT)
 });
 
 const pipes$ = interval(4000).pipe(
-  scan<number, Pipe[]>(acc => [...acc, createPipe()], []),
+  scan<number, Pipe[]>((acc, val) => [...acc, createPipe(val)], []),
   combineLatestOperator(clock$),
   map(([pipes]) => {
     pipes.forEach(p => (p.distance -= PIPE_SPEED));

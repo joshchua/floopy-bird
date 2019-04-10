@@ -3,7 +3,6 @@ import "three-examples/controls/OrbitControls";
 import { GameState } from "../game/models/GameState";
 import { World } from "./meshes/World";
 import { PipeSet } from "./meshes/PipeSet";
-import { Pipe } from "./meshes/Pipe";
 import { Bird } from "./meshes/Bird";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -54,27 +53,11 @@ const bird = new Bird(15);
 bird.position.y = 10;
 //scene.add(bird);
 
-let pipeSet = new PipeSet(100, 20, 30);
-scene.add(pipeSet);
-
-let pipeBuffer: Pipe[] = [];
-for (let i = 0; i < 7; i++) pipeBuffer.push(new Pipe(10));
-pipeBuffer.forEach(p => {
-  p.visible = false;
-  scene.add(p);
-}, this);
+let pipeMap = new Map<number, PipeSet>();
 
 const renderGameState = (state: GameState) => {
   if (state["scene"] == "game") {
     bird.position.y = state["bird"].y;
-    pipeBuffer.forEach((p, i) => {
-      if (i < state["pipes"].length - 1) {
-        p.position.x = state["pipes"][i].distance;
-        p.visible = true;
-      } else {
-        p.visible = false;
-      }
-    }, this);
   }
 
   controls.update();

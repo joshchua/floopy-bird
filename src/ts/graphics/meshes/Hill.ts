@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export class Hill extends THREE.Group {
-  constructor(radius, height: number, color: number) {
+  constructor(radius: number, height: number, color: number) {
     super();
 
     const radialSegments = 32;
