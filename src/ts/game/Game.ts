@@ -23,26 +23,12 @@ import { Pipe } from "./models/Pipe";
 const MAX_HEIGHT = 100;
 const PIPE_SPEED = 0.1;
 
-const scene$ = new BehaviorSubject("main-menu");
-
-fromEvent(document.querySelector(".mainMenu .startGame"), "click").subscribe(
-  () => scene$.next("game")
-);
-
 fromEvent(document.querySelector(".mainMenu .github"), "click").subscribe(
   () => (window.location.href = "https://github.com/joshchua/floopy-bird")
 );
 
-scene$.subscribe(s => {
-  if (s == "game") {
-    document
-      .getElementsByClassName("mainMenu")[0]
-      .setAttribute("class", "hidden");
-  }
-});
-
 const clock$ = interval(0, animationFrameScheduler).pipe(
-  map(() => {
+  map<number, Tick>(() => {
     return {
       time: performance.now(),
       delta: 0
@@ -102,15 +88,30 @@ const createPipe = (): Pipe => ({
 const pipes$ = interval(4000).pipe(
   scan<number, Pipe[]>(acc => [...acc, createPipe()], []),
   combineLatestOperator(clock$),
-  map(([pipes, clock]) => {
+  map(([pipes]) => {
     pipes.forEach(p => (p.distance -= PIPE_SPEED));
     return pipes.filter(p => p.distance > -10).slice(0, 7);
-  })
+  }),
+  startWith([])
 );
 
-// pipes$.pipe(
-//   map((p) => p.length)
-// ).subscribe(console.log);
+const scene$ = merge(
+  fromEvent(document.querySelector(".mainMenu .startGame"), "click").pipe(
+    map(() => "game")
+  )
+).pipe(
+  combineLatestOperator(bird$, pipes$, clock$),
+  map(([scene, bird, pipes]) => {
+    return scene;
+  }),
+  startWith("main-menu")
+);
+
+scene$.subscribe(s => {
+  if (s == "game") {
+    document.querySelector(".mainMenu").setAttribute("class", "hidden");
+  }
+});
 
 /**
  * An observable of GameStates

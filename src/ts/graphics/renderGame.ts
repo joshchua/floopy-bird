@@ -5,7 +5,7 @@ import { Pipe } from "./meshes/Pipe";
 import { World } from "./meshes/World";
 import { Bird } from "./meshes/Bird";
 
-const renderer = new THREE.WebGLRenderer({ antialias: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
