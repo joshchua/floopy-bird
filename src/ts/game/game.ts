@@ -83,10 +83,10 @@ const bird$ = combineLatest(of(initBird), clock$, input$).pipe(
 const createPipe = (id: number): Pipe => ({
   id: id,
   distance: 300,
-  gapPosition: Math.floor(Math.random() * MAX_HEIGHT)
+  gapPosition: Math.floor(Math.random() * (MAX_HEIGHT - 30)) + 15
 });
 
-const pipes$ = interval(4000).pipe(
+const pipes$ = interval(8000).pipe(
   scan<number, Pipe[]>((acc, val) => [...acc, createPipe(val)], []),
   combineLatestOperator(clock$),
   map(([pipes]) => {
@@ -110,7 +110,7 @@ const scene$ = merge(
 
 scene$.subscribe(s => {
   if (s == "game") {
-    document.querySelector(".mainMenu").setAttribute("class", "hidden");
+    //document.querySelector(".mainMenu").setAttribute("class", "hidden");
   }
 });
 

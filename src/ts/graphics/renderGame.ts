@@ -4,6 +4,7 @@ import { GameState } from "../game/models/GameState";
 import { World } from "./meshes/World";
 import { PipeSet } from "./meshes/PipeSet";
 import { Bird } from "./meshes/Bird";
+import { pipe } from "rxjs";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -51,13 +52,42 @@ scene.add(world);
 
 const bird = new Bird(15);
 bird.position.y = 10;
-//scene.add(bird);
+scene.add(bird);
 
-let pipeMap = new Map<number, PipeSet>();
+let availPipes: number[] = [];
+let pipeMap = new Map<number, number>();
+let pipes: PipeSet[] = [];
+for (let i = 0; i < 7; i++) {
+  let p = new PipeSet(100, 30, 50);
+  p.visible = false;
+  pipes.push(p);
+  scene.add(p);
+  availPipes.push(i)
+}
 
 const renderGameState = (state: GameState) => {
   if (state["scene"] == "game") {
     bird.position.y = state["bird"].y;
+    pipeMap.forEach((val, key) => {
+      if (state["pipes"].filter(p => p.id == key).length == 0) {
+        availPipes.push(val);
+        pipes[val].visible = false;
+        pipeMap.delete(key);
+      }
+    }, this);
+    state["pipes"].forEach((p) => {
+      if (pipeMap.has(p.id)) {
+        pipes[pipeMap.get(p.id)].position.x = p.distance;
+      }
+
+      if (!pipeMap.has(p.id) && availPipes.length > 0) {
+        let meshIndex = availPipes.pop();
+        pipeMap.set(p.id, meshIndex);
+        pipes[meshIndex].position.x = p.distance;
+        pipes[meshIndex].adjustPipes(30, p.gapPosition);
+        pipes[meshIndex].visible = true;        
+      }      
+    }, this);
   }
 
   controls.update();
