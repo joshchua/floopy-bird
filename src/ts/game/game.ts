@@ -104,29 +104,29 @@ const initBird: Bird = {
   ySpeed: 0
 };
 
-const createBird$ = () =>
-  combineLatest(of(initBird), input$, scene$, clock$).pipe(
-    map(([bird, input, scene]) => {
-      if (input.pressed == true) {
-        bird.fallSpeed = 0;
-        bird.ySpeed = -0.2;
-      }
-
-      bird.fallSpeed += 0.01;
-      const dy = -(bird.fallSpeed + bird.ySpeed);
-
-      if ((bird.y <= 0 && dy < 0) || (bird.y >= MAX_HEIGHT && dy > 0))
-        return bird;
-
-      bird.y += dy;
-
+const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
+  map(([bird, input, scene]) => {
+    if (scene == "main-menu") {
+      bird.y = MAX_HEIGHT / 2;
+      bird.ySpeed = 0;
+      bird.fallSpeed = 0;
       return bird;
-    })
-  );
+    }
+    if (input.pressed == true) {
+      bird.fallSpeed = 0;
+      bird.ySpeed = -0.2;
+    }
 
-const bird$ = fromEvent(startGameBtn, "click").pipe(
-  switchMapTo(createBird$()),
-  startWith(initBird)
+    bird.fallSpeed += 0.01;
+    const dy = -(bird.fallSpeed + bird.ySpeed);
+
+    if ((bird.y <= 0 && dy < 0) || (bird.y >= MAX_HEIGHT && dy > 0))
+      return bird;
+
+    bird.y += dy;
+
+    return bird;
+  })
 );
 
 const createPipe = (id: number): Pipe => ({
