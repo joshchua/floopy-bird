@@ -3,7 +3,6 @@ import {
   animationFrameScheduler,
   fromEvent,
   merge,
-  BehaviorSubject,
   of,
   combineLatest
 } from "rxjs";
@@ -22,6 +21,9 @@ import { Pipe } from "./models/Pipe";
 
 const MAX_HEIGHT = 100;
 const PIPE_SPEED = 0.1;
+const PIPE_WIDTH = 10; // Placeholder values...
+const BIRD_WIDTH = 10;
+const BIRD_HEIGHT = 10;
 
 fromEvent(document.querySelector(".mainMenu .github"), "click").subscribe(
   () => (window.location.href = "https://github.com/joshchua/floopy-bird")
@@ -109,8 +111,25 @@ const scene$ = merge(
 );
 
 scene$.subscribe(s => {
-  if (s == "game") {
-    //document.querySelector(".mainMenu").setAttribute("class", "hidden");
+  const mainMenu = document.querySelector(".mainMenu");
+  const gameOver = document.querySelector(".gameOver");
+  const score = document.querySelector(".score");
+
+  const elementsFound = Boolean(mainMenu && gameOver && score);
+
+  const hideEl = (...el: Element[]) =>
+    el.forEach(e => e.setAttribute("class", "hidden"));
+  const showEl = (...el: Element[]) =>
+    el.forEach(e => e.classList.remove("hidden"));
+  if (s == "game" && elementsFound) {
+    hideEl(mainMenu, gameOver);
+    showEl(score);
+  } else if (s == "game-over" && elementsFound) {
+    hideEl(mainMenu, score);
+    showEl(gameOver);
+  } else if (s == "main-menu" && elementsFound) {
+    hideEl(score, gameOver);
+    showEl(mainMenu);
   }
 });
 
