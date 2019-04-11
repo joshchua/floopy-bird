@@ -66,8 +66,8 @@ for (let i = 0; i < 7; i++) {
 }
 
 const renderGameState = (state: GameState) => {
+  bird.position.y = state["bird"].y;
   if (state["scene"] == "game") {
-    bird.position.y = state["bird"].y;
     pipeMap.forEach((val, key) => {
       if (state["pipes"].filter(p => p.id == key).length == 0) {
         availPipes.push(val);
