@@ -19,7 +19,8 @@ import {
   withLatestFrom,
   throttleTime,
   takeWhile,
-  switchMapTo
+  switchMapTo,
+  filter
 } from "rxjs/operators";
 
 import { Tick } from "./models/Tick";
@@ -27,12 +28,15 @@ import { InputState } from "./models/InputState";
 import { GameState } from "./models/GameState";
 import { Bird } from "./models/Bird";
 import { Pipe } from "./models/Pipe";
-
-const MAX_HEIGHT = 100;
-const PIPE_SPEED = 0.1;
-const PIPE_WIDTH = 10; // Placeholder values...
-const BIRD_WIDTH = 10;
-const BIRD_HEIGHT = 10;
+import { BoundingBox } from "./models/BoundingBox";
+import {
+  MAX_HEIGHT,
+  PIPE_SPEED,
+  PIPE_WIDTH,
+  BIRD_WIDTH,
+  BIRD_HEIGHT,
+  GAP_HEIGHT
+} from "../utils/constants";
 
 const mainMenuEl = document.querySelector(".mainMenu");
 const gameOverEl = document.querySelector(".gameOver");
@@ -75,6 +79,8 @@ const input$ = merge(
 );
 
 const scene$ = new BehaviorSubject("main-menu");
+
+const newGame$ = scene$.pipe(filter(s => s == "main-menu"));
 
 merge(
   fromEvent(startGameBtn, "click").pipe(map(() => "game")),
@@ -131,7 +137,7 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
 
 const createPipe = (id: number): Pipe => ({
   id: id,
-  distance: 300,
+  distance: 100,
   gapPosition: Math.floor(Math.random() * (MAX_HEIGHT - 30)) + 15
 });
 
@@ -146,10 +152,73 @@ const createPipe$ = () =>
     startWith([])
   );
 
-const pipes$ = fromEvent(startGameBtn, "click").pipe(
+const pipes$ = newGame$.pipe(
   switchMapTo(createPipe$()),
   startWith<Pipe[]>([])
 );
+
+/**
+ * Find a Axis-Aligned Bounding Box collision.
+ *
+ * @param x1
+ * @param y1
+ * @param width1
+ * @param height1
+ * @param x2
+ * @param y2
+ * @param width2
+ * @param height2
+ */
+const detectAABBCollission = (
+  x1: number,
+  y1: number,
+  width1: number,
+  height1: number,
+  x2: number,
+  y2: number,
+  width2: number,
+  height2: number
+): boolean =>
+  x1 < x2 + width2 &&
+  x1 + width1 > x2 &&
+  y1 < y2 + height2 &&
+  y1 + height1 > y2;
+
+const topPipeBoundingBox = (
+  gapPosition: number,
+  distance: number,
+  pipeWidth: number,
+  gapHeight: number,
+  maxHeight: number
+): BoundingBox => ({
+  x: distance - pipeWidth / 2,
+  y: gapPosition + (gapHeight / 2),
+  width: pipeWidth,
+  height: maxHeight - gapPosition - gapHeight / 2
+});
+
+const bottomPipeBoundingBox = (
+  gapPosition: number,
+  distance: number,
+  pipeWidth: number,
+  gapHeight: number
+): BoundingBox => ({
+  x: distance - pipeWidth / 2,
+  y: 0,
+  width: pipeWidth,
+  height: gapPosition - gapHeight / 2
+});
+
+const birdBoundingBox = (
+  width: number,
+  height: number,
+  position: number
+): BoundingBox => ({
+  x: 0 - width / 2,
+  y: position - height / 2,
+  height: height,
+  width: width
+});
 
 /**
  * An observable of GameStates
@@ -162,12 +231,46 @@ const game$ = clock$.pipe(
     pipes: pipes
   })),
   tap(state => {
-    if (state["bird"].y <= 0 && state["scene"] == "game") {
-      scene$.next("game-over");
+    const gameOver = () => scene$.next("game-over");
+
+    if (state["pipes"].length > 0 && state["scene"] == "game") {
+      const p = state["pipes"][0];
+      const top = topPipeBoundingBox(
+        p.gapPosition,
+        p.distance,
+        PIPE_WIDTH,
+        GAP_HEIGHT,
+        MAX_HEIGHT
+      );
+      const bottom = bottomPipeBoundingBox(
+        p.gapPosition,
+        p.distance,
+        PIPE_WIDTH,
+        GAP_HEIGHT
+      );
+      const b = state["bird"];
+      const bird = birdBoundingBox(BIRD_WIDTH, BIRD_HEIGHT, b.y);
+
+      const collision = (box1: BoundingBox, box2: BoundingBox) =>
+        detectAABBCollission(
+          box1.x,
+          box1.y,
+          box1.width,
+          box1.height,
+          box2.x,
+          box2.y,
+          box2.width,
+          box2.height
+        );
+
+      if (collision(bird, top) || collision(bird, bottom)) {
+        console.log(bird, top, bottom);
+        gameOver();
+      };
     }
+
+    if (state["bird"].y <= 0 && state["scene"] == "game") gameOver();
   })
 );
-
-scene$.subscribe(console.log);
 
 export { game$ };

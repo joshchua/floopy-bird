@@ -4,7 +4,14 @@ import { GameState } from "../game/models/GameState";
 import { World } from "./meshes/World";
 import { PipeSet } from "./meshes/PipeSet";
 import { Bird } from "./meshes/Bird";
-import { pipe } from "rxjs";
+import {
+  MAX_HEIGHT,
+  PIPE_SPEED,
+  PIPE_WIDTH,
+  BIRD_WIDTH,
+  BIRD_HEIGHT,
+  GAP_HEIGHT
+} from "../utils/constants";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -50,7 +57,7 @@ scene.add(axesHelper);
 let world = new World();
 scene.add(world);
 
-const bird = new Bird(15);
+const bird = new Bird(BIRD_WIDTH);
 bird.position.y = 10;
 scene.add(bird);
 
@@ -58,16 +65,16 @@ let availPipes: number[] = [];
 let pipeMap = new Map<number, number>();
 let pipes: PipeSet[] = [];
 for (let i = 0; i < 7; i++) {
-  let p = new PipeSet(100, 30, 50);
+  let p = new PipeSet(MAX_HEIGHT, GAP_HEIGHT, 50);
   p.visible = false;
   pipes.push(p);
   scene.add(p);
-  availPipes.push(i)
+  availPipes.push(i);
 }
 
 const renderGameState = (state: GameState) => {
   bird.position.y = state["bird"].y;
-  if (state["scene"] == "game") {
+  if (state["scene"] == "game" || state["scene"] == "game-over") {
     pipeMap.forEach((val, key) => {
       if (state["pipes"].filter(p => p.id == key).length == 0) {
         availPipes.push(val);
@@ -75,7 +82,7 @@ const renderGameState = (state: GameState) => {
         pipeMap.delete(key);
       }
     }, this);
-    state["pipes"].forEach((p) => {
+    state["pipes"].forEach(p => {
       if (pipeMap.has(p.id)) {
         pipes[pipeMap.get(p.id)].position.x = p.distance;
       }
@@ -85,8 +92,8 @@ const renderGameState = (state: GameState) => {
         pipeMap.set(p.id, meshIndex);
         pipes[meshIndex].position.x = p.distance;
         pipes[meshIndex].adjustPipes(30, p.gapPosition);
-        pipes[meshIndex].visible = true;        
-      }      
+        pipes[meshIndex].visible = true;
+      }
     }, this);
   }
 
