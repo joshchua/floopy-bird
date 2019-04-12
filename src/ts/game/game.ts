@@ -20,7 +20,8 @@ import {
   throttleTime,
   takeWhile,
   switchMapTo,
-  filter
+  filter,
+  distinctUntilChanged
 } from "rxjs/operators";
 
 import { Tick } from "./models/Tick";
@@ -44,14 +45,17 @@ import {
   birdBoundingBox
 } from "../utils/collision";
 
-const mainMenuEl = document.querySelector(".mainMenu");
-const gameOverEl = document.querySelector(".gameOver");
-const scoreEl = document.querySelector(".score");
+import {
+  mainMenuDiv,
+  gameOverDiv,
+  hudDiv,
+  startGameBtn,
+  playAgainBtn,
+  githubBtn,
+  scoreDisplays
+} from "./domElements";
 
-const startGameBtn = document.querySelector(".mainMenu .startGame");
-const playAgainBtn = document.querySelector(".gameOver button");
-
-fromEvent(document.querySelector(".mainMenu .github"), "click").subscribe(
+fromEvent(githubBtn, "click").subscribe(
   () => (window.location.href = "https://github.com/joshchua/floopy-bird")
 );
 
@@ -101,14 +105,14 @@ scene$.subscribe(s => {
   const showEl = (...el: Element[]) =>
     el.forEach(e => e.classList.remove("hidden"));
   if (s == "game") {
-    hideEl(mainMenuEl, gameOverEl);
-    showEl(scoreEl);
+    hideEl(mainMenuDiv, gameOverDiv);
+    showEl(hudDiv);
   } else if (s == "game-over") {
-    hideEl(mainMenuEl, scoreEl);
-    showEl(gameOverEl);
+    hideEl(mainMenuDiv, hudDiv);
+    showEl(gameOverDiv);
   } else if (s == "main-menu") {
-    hideEl(scoreEl, gameOverEl);
-    showEl(mainMenuEl);
+    hideEl(hudDiv, gameOverDiv);
+    showEl(mainMenuDiv);
   }
 });
 
@@ -128,10 +132,10 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
     }
     if (input.pressed == true) {
       bird.fallSpeed = 0;
-      bird.ySpeed = -30;
+      bird.ySpeed = -10;
     }
 
-    bird.fallSpeed += 1.5;
+    bird.fallSpeed += 0.5;
     const dy = -(bird.fallSpeed + bird.ySpeed) * mstoS(clock.delta);
 
     if ((bird.y <= 0 && dy < 0) || (bird.y >= MAX_HEIGHT && dy > 0))
@@ -165,15 +169,34 @@ const pipes$ = newGame$.pipe(
   startWith<Pipe[]>([])
 );
 
+const score$ = combineLatest(of(0), bird$, pipes$, scene$).pipe(
+  map<any, number>(([score, bird$, pipes, scene]) => {
+    if (scene == "main-menu") score = 0;
+
+    if (scene == "game" && pipes.length > 0) {
+      if (pipes[0].distance == 0) score++;
+    }
+
+    return score;
+  }),
+  distinctUntilChanged()
+);
+
+score$.subscribe(s => {
+  scoreDisplays.forEach(d => d.innerHTML = s.toString())
+  console.log(s);
+});
+
 /**
  * An observable of GameStates
  */
 const game$ = clock$.pipe(
-  withLatestFrom(scene$, bird$, pipes$),
-  map<any, GameState>(([clock, scene, bird, pipes]) => ({
+  withLatestFrom(scene$, bird$, pipes$, score$),
+  map<any, GameState>(([clock, scene, bird, pipes, score]) => ({
     scene: scene,
     bird: bird,
-    pipes: pipes
+    pipes: pipes,
+    score: score
   })),
   tap(state => {
     const gameOver = () => scene$.next("game-over");
