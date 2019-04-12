@@ -12,7 +12,7 @@ import { BoundingBox } from "../game/models/BoundingBox";
  * @param width2
  * @param height2
  */
-const detectAABBCollission = (
+const detectAABBCollision = (
   x1: number,
   y1: number,
   width1: number,
@@ -26,6 +26,18 @@ const detectAABBCollission = (
   x1 + width1 > x2 &&
   y1 < y2 + height2 &&
   y1 + height1 > y2;
+
+const detectAABBCollisionByBox = (box1: BoundingBox, box2: BoundingBox) =>
+  detectAABBCollision(
+    box1.x,
+    box1.y,
+    box1.width,
+    box1.height,
+    box2.x,
+    box2.y,
+    box2.width,
+    box2.height
+  );
 
 const topPipeBoundingBox = (
   gapPosition: number,
@@ -64,7 +76,8 @@ const birdBoundingBox = (
 });
 
 export {
-  detectAABBCollission,
+  detectAABBCollision,
+  detectAABBCollisionByBox,
   topPipeBoundingBox,
   bottomPipeBoundingBox,
   birdBoundingBox

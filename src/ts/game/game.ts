@@ -38,11 +38,11 @@ import {
   GAP_HEIGHT
 } from "../utils/constants";
 import {
-  detectAABBCollission,
+  detectAABBCollisionByBox,
   topPipeBoundingBox,
   bottomPipeBoundingBox,
   birdBoundingBox
-} from "../utils/boundingBox";
+} from "../utils/collision";
 
 const mainMenuEl = document.querySelector(".mainMenu");
 const gameOverEl = document.querySelector(".gameOver");
@@ -67,6 +67,8 @@ const clock$ = interval(0, animationFrameScheduler).pipe(
     delta: current.time - previous.time
   }))
 );
+
+const mstoS = (ms: number) => 0.001 * ms;
 
 const input$ = merge(
   fromEvent(document, "keydown").pipe(
@@ -117,7 +119,7 @@ const initBird: Bird = {
 };
 
 const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
-  map(([bird, input, scene]) => {
+  map(([bird, input, scene, clock]) => {
     if (scene == "main-menu") {
       bird.y = MAX_HEIGHT / 2;
       bird.ySpeed = 0;
@@ -126,11 +128,11 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
     }
     if (input.pressed == true) {
       bird.fallSpeed = 0;
-      bird.ySpeed = -0.2;
+      bird.ySpeed = -30;
     }
 
-    bird.fallSpeed += 0.01;
-    const dy = -(bird.fallSpeed + bird.ySpeed);
+    bird.fallSpeed += 1.5;
+    const dy = -(bird.fallSpeed + bird.ySpeed) * mstoS(clock.delta);
 
     if ((bird.y <= 0 && dy < 0) || (bird.y >= MAX_HEIGHT && dy > 0))
       return bird;
@@ -148,11 +150,11 @@ const createPipe = (id: number): Pipe => ({
 });
 
 const createPipe$ = () =>
-  interval(4000).pipe(
+  interval(1500).pipe(
     scan<any, Pipe[]>((acc, val) => [...acc, createPipe(val)], []),
     combineLatestOperator(clock$),
-    map(([pipes]) => {
-      pipes.forEach(p => (p.distance -= PIPE_SPEED));
+    map(([pipes, clock]) => {
+      pipes.forEach(p => (p.distance -= PIPE_SPEED * mstoS(clock.delta)));
       return pipes.filter(p => p.distance > -10).slice(0, 7);
     }),
     startWith([])
@@ -194,22 +196,11 @@ const game$ = clock$.pipe(
       const b = state["bird"];
       const bird = birdBoundingBox(BIRD_WIDTH, BIRD_HEIGHT, b.y);
 
-      const collision = (box1: BoundingBox, box2: BoundingBox) =>
-        detectAABBCollission(
-          box1.x,
-          box1.y,
-          box1.width,
-          box1.height,
-          box2.x,
-          box2.y,
-          box2.width,
-          box2.height
-        );
-
-      if (collision(bird, top) || collision(bird, bottom)) {
-        console.log(bird, top, bottom);
+      if (
+        detectAABBCollisionByBox(bird, top) ||
+        detectAABBCollisionByBox(bird, bottom)
+      )
         gameOver();
-      };
     }
 
     if (state["bird"].y <= 0 && state["scene"] == "game") gameOver();
