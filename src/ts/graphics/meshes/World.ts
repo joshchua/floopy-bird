@@ -114,7 +114,7 @@ export class World extends THREE.Group {
         },
         { x: 60, z: -40 }
       ),
-      createCloud({ x: 50, y: 50, z: 50 })
+      createCloud({ x: 50, y: 50, z: -50 })
     );
   }
 }
