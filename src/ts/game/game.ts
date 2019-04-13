@@ -24,7 +24,10 @@ import {
   distinctUntilChanged,
   share,
   multicast,
-  delay
+  delay,
+  mapTo,
+  merge as mergeOperator,
+  switchMap
 } from "rxjs/operators";
 
 import { Tick } from "./models/Tick";
@@ -79,22 +82,54 @@ const clock$ = interval(0, animationFrameScheduler).pipe(
 
 const msToS = (ms: number) => 0.001 * ms;
 
-const input$ = merge(
-  fromEvent(document, "keydown").pipe(
-    map<Event, boolean>((event: KeyboardEvent) => {
-      return true;
-    })
-  ),
-  fromEvent(document, "keyup").pipe(
-    map<Event, boolean>((event: KeyboardEvent) => {
-      return false;
-    })
-  )
+const keyboardInput$ = merge(
+  fromEvent(document, "keydown"),
+  fromEvent(document, "keyup")
 ).pipe(
-  map<boolean, InputState>(b => ({ pressed: b })),
-  distinctUntilChanged(),
-  startWith({ pressed: false })
+  filter(
+    (() => {
+      let keysPressed = {};
+      return (e: KeyboardEvent) => {
+        let k = e.key || e.which;
+        if (e.type == "keyup") {
+          delete keysPressed[k];
+          return true;
+        } else if (e.type == "keydown") {
+          if (keysPressed[k]) return false;
+          else {
+            keysPressed[k] = true;
+            return true;
+          }
+        }
+      };
+    })()
+  ),
+  map(e => e.type == "keydown"),
+  mergeOperator(clock$.pipe(mapTo(false))),
 );
+
+const mouseInput$ = fromEvent(document, "click").pipe(mapTo(true));
+
+const input$ = merge(
+  keyboardInput$,
+  mouseInput$,
+  keyboardInput$
+).pipe(
+  distinctUntilChanged(),
+  map<boolean, InputState>(b => ({ pressed: b })
+));
+
+//keyBoardInput$.subscribe(console.log);
+
+// const input$ = merge(
+//   fromEvent(document, "keydown").pipe(mapTo(true)),
+//   fromEvent(document, "keyup").pipe(mapTo(false))
+// ).pipe(
+//   map<boolean, InputState>(b => ({ pressed: b })),
+
+//   distinctUntilChanged(),
+//   startWith({ pressed: false })
+// );
 
 const scene$ = new BehaviorSubject("main-menu");
 
@@ -102,20 +137,16 @@ const newGame$ = scene$.pipe(filter(s => s == "game", distinctUntilChanged()));
 
 merge(
   fromEvent(startGameBtn, "click").pipe(
-    switchMapTo(merge(
-      of("transition"),
-      of("game").pipe(delay(2000))
-    ))
+    switchMapTo(merge(of("transition"), of("game").pipe(delay(2000))))
   ),
   fromEvent(playAgainBtn, "click").pipe(map(() => "main-menu"))
 ).subscribe(scene$);
 
-const hideEl = (...el: Element[]) =>
-    el.forEach(e => e.classList.add("hidden"));
-  const showEl = (...el: Element[]) =>
-    el.forEach(e => e.classList.remove("hidden"));
+const hideEl = (...el: Element[]) => el.forEach(e => e.classList.add("hidden"));
+const showEl = (...el: Element[]) =>
+  el.forEach(e => e.classList.remove("hidden"));
 
-scene$.subscribe(s => {    
+scene$.subscribe(s => {
   if (s == "game" || s == "transition") {
     hideEl(mainMenuDiv, gameOverDiv);
     showEl(hudDiv);
@@ -148,16 +179,17 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
       bird.ySpeed = -0.8;
     }
 
-    bird.fallSpeed += 0.04;
-    const dy = -(bird.fallSpeed + bird.ySpeed);
+    if (scene == "game") {
+      bird.fallSpeed += 0.04;
+      const dy = -(bird.fallSpeed + bird.ySpeed);
+      if (
+        (bird.y <= BIRD_HEIGHT / 2 && dy < 0) ||
+        (bird.y >= MAX_HEIGHT && dy > 0)
+      )
+        return bird;
 
-    if (
-      (bird.y <= BIRD_HEIGHT / 2 && dy < 0) ||
-      (bird.y >= MAX_HEIGHT && dy > 0)
-    )
-      return bird;
-
-    bird.y += dy;
+      bird.y += dy;
+    }
 
     return bird;
   })
@@ -180,7 +212,8 @@ const createPipe$ = () =>
         .filter(p => p.distance > -PIPE_START_DIST)
         .slice(0, MAX_PIPES);
 
-      if (scene == "main-menu" || scene == "transition") return current.filter(() => false);
+      if (scene == "main-menu" || scene == "transition")
+        return current.filter(() => false);
 
       if (scene == "game-over")
         return current.filter(p => p.distance < PIPE_START_DIST);

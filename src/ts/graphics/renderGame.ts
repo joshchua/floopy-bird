@@ -52,9 +52,6 @@ window.addEventListener(
   false
 );
 
-let axesHelper = new THREE.AxesHelper(5);
-scene.add(axesHelper);
-
 let world = new World();
 scene.add(world);
 
@@ -79,9 +76,6 @@ for (let i = 0; i < MAX_PIPES; i++) {
 }
 
 let prevScene: string = "main-menu";
-
-let isCameraTweening = true;
-
 
 const renderGameState = (state: GameState) => {
 
