@@ -122,7 +122,7 @@ export class Bird extends THREE.Group {
         cell(13, -3),
         cell(14, -3)
       ],
-      0xfa0202
+      0xFF6AD5
     );
 
     let orangeMesh = createPixelArtMesh(
@@ -142,7 +142,7 @@ export class Bird extends THREE.Group {
         cell(8, -3),
         cell(9, -4)
       ],
-      0xff9216
+      0x8795E8
     );
 
     let yellowMesh = createPixelArtMesh(
@@ -168,7 +168,7 @@ export class Bird extends THREE.Group {
         cell(8, 1),
         cell(9, 0)
       ],
-      0xf1f008
+      0x94D0FF
     );
 
     let whiteMesh = createPixelArtMesh(

@@ -14,12 +14,12 @@ import {
   MAX_PIPES
 } from "../utils/constants";
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2cb9e8);
+renderer.setClearColor(0x000000, 0);
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -31,7 +31,7 @@ const camera = new THREE.PerspectiveCamera(
 let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(0, 100, 20);
+directionalLight.position.set(0, 70, 50);
 directionalLight.castShadow = true;
 scene.add(directionalLight);
 
@@ -73,7 +73,14 @@ for (let i = 0; i < MAX_PIPES; i++) {
   availPipes.push(i);
 }
 
+let prevScene: string = "main-menu";
+
 const renderGameState = (state: GameState) => {
+  if (state["scene"] != prevScene) {
+    // TODO: Animate camera position
+    prevScene = state["scene"];
+  }
+
   bird.position.y = state["bird"].y;
   if (state["scene"] == "game" || state["scene"] == "game-over") {
     pipeMap.forEach((val, key) => {

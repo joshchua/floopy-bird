@@ -144,7 +144,10 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
     bird.fallSpeed += 0.04;
     const dy = -(bird.fallSpeed + bird.ySpeed);
 
-    if ((bird.y <= BIRD_HEIGHT / 2 && dy < 0) || (bird.y >= MAX_HEIGHT && dy > 0))
+    if (
+      (bird.y <= BIRD_HEIGHT / 2 && dy < 0) ||
+      (bird.y >= MAX_HEIGHT && dy > 0)
+    )
       return bird;
 
     bird.y += dy;
@@ -156,7 +159,9 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
 const createPipe = (id: number): Pipe => ({
   id: id,
   distance: PIPE_START_DIST,
-  gapPosition: Math.floor(Math.random() * (MAX_HEIGHT - (0.4 * MAX_HEIGHT))) + ((0.4 * MAX_HEIGHT) / 2)
+  gapPosition:
+    Math.floor(Math.random() * (MAX_HEIGHT - 0.4 * MAX_HEIGHT)) +
+    (0.4 * MAX_HEIGHT) / 2
 });
 
 const createPipe$ = () =>
@@ -164,9 +169,12 @@ const createPipe$ = () =>
     scan<any, Pipe[]>((acc, val) => [...acc, createPipe(val)], []),
     combineLatestOperator(clock$, scene$),
     map(([pipes, clock, scene]) => {
-      let current = pipes.filter(p => p.distance > -PIPE_START_DIST).slice(0, MAX_PIPES);
+      let current = pipes
+        .filter(p => p.distance > -PIPE_START_DIST)
+        .slice(0, MAX_PIPES);
 
-      if (scene == "game-over") return current.filter(p => p.distance < PIPE_START_DIST);
+      if (scene == "game-over")
+        return current.filter(p => p.distance < PIPE_START_DIST);
 
       current.forEach(p => (p.distance -= PIPE_SPEED * msToS(clock.delta)));
       return current;
@@ -227,7 +235,8 @@ const game$ = clock$.pipe(
         gameOver();
     }
 
-    if (state["bird"].y <= BIRD_HEIGHT / 2 && state["scene"] == "game") gameOver();
+    if (state["bird"].y <= BIRD_HEIGHT / 2 && state["scene"] == "game")
+      gameOver();
   }),
   share()
 );
