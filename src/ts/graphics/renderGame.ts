@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import "three-examples/controls/OrbitControls";
+import * as TWEEN from "@tweenjs/tween.js";
 import { GameState } from "../game/models/GameState";
 import { World } from "./meshes/World";
 import { PipeSet } from "./meshes/PipeSet";
@@ -13,6 +14,7 @@ import {
   GAP_HEIGHT,
   MAX_PIPES
 } from "../utils/constants";
+import { CameraHelper } from "three";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -28,7 +30,7 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 
-let controls = new THREE.OrbitControls(camera, renderer.domElement);
+//let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(0, 70, 50);
@@ -38,9 +40,7 @@ scene.add(directionalLight);
 const ambientLight = new THREE.AmbientLight(0x404040);
 scene.add(ambientLight);
 
-camera.position.z = 20;
-camera.position.y = 30;
-controls.update();
+
 
 window.addEventListener(
   "resize",
@@ -62,6 +62,11 @@ const bird = new Bird(BIRD_WIDTH);
 bird.position.y = 10;
 scene.add(bird);
 
+camera.position.z = 120;
+camera.position.y = 50;
+camera.lookAt(0, 50, 0);
+//controls.update();
+
 let availPipes: number[] = [];
 let pipeMap = new Map<number, number>();
 let pipes: PipeSet[] = [];
@@ -75,38 +80,68 @@ for (let i = 0; i < MAX_PIPES; i++) {
 
 let prevScene: string = "main-menu";
 
+let isCameraTweening = true;
+
+
 const renderGameState = (state: GameState) => {
+
   if (state["scene"] != prevScene) {
-    // TODO: Animate camera position
+    if (state["scene"] == "game-over") {
+      new TWEEN.Tween(camera.position)
+      .to({x: 0, y: 50, z: 120}, 1000)
+      .onStart(() => bird.visible = true)
+      .start();
+
+      new TWEEN.Tween(camera.rotation).to({
+        y: 0
+      }, 1000).start();
+    } else if (state["scene"] == "transition") {
+      new TWEEN.Tween(camera.position).to({
+        x: 0,
+        y: 50,
+        z: 0
+      }, 1000).start();
+
+      new TWEEN.Tween(camera.rotation).to({
+        y: - Math.PI / 2
+      }, 1000).onComplete(() => bird.visible = false).start();
+    }
+
     prevScene = state["scene"];
   }
 
-  bird.position.y = state["bird"].y;
-  if (state["scene"] == "game" || state["scene"] == "game-over") {
-    pipeMap.forEach((val, key) => {
-      if (state["pipes"].filter(p => p.id == key).length == 0) {
-        availPipes.push(val);
-        pipes[val].visible = false;
-        pipeMap.delete(key);
-      }
-    }, this);
-    state["pipes"].forEach(p => {
-      if (pipeMap.has(p.id)) {
-        pipes[pipeMap.get(p.id)].position.x = p.distance;
-      }
-
-      if (!pipeMap.has(p.id) && availPipes.length > 0) {
-        let meshIndex = availPipes.pop();
-        pipeMap.set(p.id, meshIndex);
-        pipes[meshIndex].position.x = p.distance;
-        pipes[meshIndex].adjustPipes(30, p.gapPosition);
-        pipes[meshIndex].visible = true;
-      }
-    }, this);
+  if (state["scene"] == "game") {
+    let pos = new THREE.Vector3();
+    pos.setFromMatrixPosition(bird.matrixWorld);
+    camera.position.set(pos.x, pos.y, pos.z);
+    camera.lookAt(pos.z + 100, pos.y, 0);
   }
 
-  controls.update();
+  bird.position.y = state["bird"].y;
+  pipeMap.forEach((val, key) => {
+    if (state["pipes"].filter(p => p.id == key).length == 0) {
+      availPipes.push(val);
+      pipes[val].visible = false;
+      pipeMap.delete(key);
+    }
+  }, this);
+  state["pipes"].forEach(p => {
+    if (pipeMap.has(p.id)) {
+      pipes[pipeMap.get(p.id)].position.x = p.distance;
+    }
+
+    if (!pipeMap.has(p.id) && availPipes.length > 0) {
+      let meshIndex = availPipes.pop();
+      pipeMap.set(p.id, meshIndex);
+      pipes[meshIndex].position.x = p.distance;
+      pipes[meshIndex].adjustPipes(30, p.gapPosition);
+      pipes[meshIndex].visible = true;
+    }
+  }, this);
+
+  //controls.update();
   renderer.render(scene, camera);
+  TWEEN.update();
 };
 
 export { renderGameState };

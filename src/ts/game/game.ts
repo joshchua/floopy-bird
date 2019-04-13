@@ -23,7 +23,8 @@ import {
   filter,
   distinctUntilChanged,
   share,
-  multicast
+  multicast,
+  delay
 } from "rxjs/operators";
 
 import { Tick } from "./models/Tick";
@@ -100,17 +101,22 @@ const scene$ = new BehaviorSubject("main-menu");
 const newGame$ = scene$.pipe(filter(s => s == "game", distinctUntilChanged()));
 
 merge(
-  fromEvent(startGameBtn, "click").pipe(map(() => "game")),
+  fromEvent(startGameBtn, "click").pipe(
+    switchMapTo(merge(
+      of("transition"),
+      of("game").pipe(delay(2000))
+    ))
+  ),
   fromEvent(playAgainBtn, "click").pipe(map(() => "main-menu"))
 ).subscribe(scene$);
 
-scene$.subscribe(s => {
-  const hideEl = (...el: Element[]) =>
+const hideEl = (...el: Element[]) =>
     el.forEach(e => e.classList.add("hidden"));
   const showEl = (...el: Element[]) =>
     el.forEach(e => e.classList.remove("hidden"));
 
-  if (s == "game") {
+scene$.subscribe(s => {    
+  if (s == "game" || s == "transition") {
     hideEl(mainMenuDiv, gameOverDiv);
     showEl(hudDiv);
   } else if (s == "game-over") {
@@ -130,12 +136,13 @@ const initBird: Bird = {
 
 const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
   map(([bird, input, scene, clock]) => {
-    if (scene == "main-menu") {
+    if (scene == "main-menu" || scene == "transition") {
       bird.y = MAX_HEIGHT / 2;
       bird.ySpeed = 0;
       bird.fallSpeed = 0;
       return bird;
     }
+
     if (input.pressed == true && scene == "game") {
       bird.fallSpeed = 0;
       bird.ySpeed = -0.8;
@@ -172,6 +179,8 @@ const createPipe$ = () =>
       let current = pipes
         .filter(p => p.distance > -PIPE_START_DIST)
         .slice(0, MAX_PIPES);
+
+      if (scene == "main-menu" || scene == "transition") return current.filter(() => false);
 
       if (scene == "game-over")
         return current.filter(p => p.distance < PIPE_START_DIST);
@@ -226,7 +235,11 @@ const game$ = clock$.pipe(
         GAP_HEIGHT
       );
       const b = state["bird"];
-      const bird = birdBoundingBox(BIRD_WIDTH, BIRD_HEIGHT, b.y);
+      // For 2.5D play
+      //const bird = birdBoundingBox(BIRD_WIDTH, BIRD_HEIGHT, b.y);
+
+      // For 3D play
+      const bird = birdBoundingBox(BIRD_WIDTH / 2, BIRD_HEIGHT / 2, b.y);
 
       if (
         detectAABBCollisionByBox(bird, top) ||
