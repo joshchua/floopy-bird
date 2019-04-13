@@ -21,7 +21,9 @@ import {
   takeWhile,
   switchMapTo,
   filter,
-  distinctUntilChanged
+  distinctUntilChanged,
+  share,
+  multicast
 } from "rxjs/operators";
 
 import { Tick } from "./models/Tick";
@@ -72,7 +74,7 @@ const clock$ = interval(0, animationFrameScheduler).pipe(
   }))
 );
 
-const mstoS = (ms: number) => 0.001 * ms;
+const msToS = (ms: number) => 0.001 * ms;
 
 const input$ = merge(
   fromEvent(document, "keydown").pipe(
@@ -101,9 +103,10 @@ merge(
 
 scene$.subscribe(s => {
   const hideEl = (...el: Element[]) =>
-    el.forEach(e => e.setAttribute("class", "hidden"));
+    el.forEach(e => e.classList.add("hidden"));
   const showEl = (...el: Element[]) =>
     el.forEach(e => e.classList.remove("hidden"));
+
   if (s == "game") {
     hideEl(mainMenuDiv, gameOverDiv);
     showEl(hudDiv);
@@ -132,11 +135,11 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
     }
     if (input.pressed == true) {
       bird.fallSpeed = 0;
-      bird.ySpeed = -10;
+      bird.ySpeed = -0.8;
     }
 
-    bird.fallSpeed += 0.5;
-    const dy = -(bird.fallSpeed + bird.ySpeed) * mstoS(clock.delta);
+    bird.fallSpeed += 0.04;
+    const dy = -(bird.fallSpeed + bird.ySpeed);
 
     if ((bird.y <= 0 && dy < 0) || (bird.y >= MAX_HEIGHT && dy > 0))
       return bird;
@@ -158,7 +161,7 @@ const createPipe$ = () =>
     scan<any, Pipe[]>((acc, val) => [...acc, createPipe(val)], []),
     combineLatestOperator(clock$),
     map(([pipes, clock]) => {
-      pipes.forEach(p => (p.distance -= PIPE_SPEED * mstoS(clock.delta)));
+      pipes.forEach(p => (p.distance -= PIPE_SPEED * msToS(clock.delta)));
       return pipes.filter(p => p.distance > -10).slice(0, 7);
     }),
     startWith([])
@@ -169,34 +172,28 @@ const pipes$ = newGame$.pipe(
   startWith<Pipe[]>([])
 );
 
-const score$ = combineLatest(of(0), bird$, pipes$, scene$).pipe(
-  map<any, number>(([score, bird$, pipes, scene]) => {
-    if (scene == "main-menu") score = 0;
-
-    if (scene == "game" && pipes.length > 0) {
-      if (pipes[0].distance == 0) score++;
-    }
-
-    return score;
-  }),
-  distinctUntilChanged()
-);
-
-score$.subscribe(s => {
-  scoreDisplays.forEach(d => d.innerHTML = s.toString())
-  console.log(s);
-});
+const calcScore = (pipes: Pipe[]) => {
+  if (pipes.length > 0) {
+    return pipes[0].distance < 0 ? pipes[0].id + 1 : pipes[0].id;
+  } else {
+    return 0;
+  }
+};
 
 /**
  * An observable of GameStates
  */
 const game$ = clock$.pipe(
-  withLatestFrom(scene$, bird$, pipes$, score$),
-  map<any, GameState>(([clock, scene, bird, pipes, score]) => ({
+  withLatestFrom(scene$, bird$, pipes$),
+  map<any, GameState>(([clock, scene, bird, pipes]) => ({
     scene: scene,
     bird: bird,
     pipes: pipes,
-    score: score
+    score: ((s: string, p: Pipe[], sc: number): number => {
+      if (s == "main-menu") return 0;
+      else if (s == "game") return calcScore(p);
+      else return sc;
+    })(scene, pipes, this.score)
   })),
   tap(state => {
     const gameOver = () => scene$.next("game-over");
@@ -227,7 +224,17 @@ const game$ = clock$.pipe(
     }
 
     if (state["bird"].y <= 0 && state["scene"] == "game") gameOver();
-  })
+  }),
+  share()
 );
+
+game$
+  .pipe(
+    map(g => g.score),
+    distinctUntilChanged()
+  )
+  .subscribe(s => {
+    scoreDisplays.forEach(d => (d.innerHTML = s.toString()));
+  });
 
 export { game$ };
