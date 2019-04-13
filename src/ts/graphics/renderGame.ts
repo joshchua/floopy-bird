@@ -10,7 +10,8 @@ import {
   PIPE_WIDTH,
   BIRD_WIDTH,
   BIRD_HEIGHT,
-  GAP_HEIGHT
+  GAP_HEIGHT,
+  MAX_PIPES
 } from "../utils/constants";
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -64,7 +65,7 @@ scene.add(bird);
 let availPipes: number[] = [];
 let pipeMap = new Map<number, number>();
 let pipes: PipeSet[] = [];
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < MAX_PIPES; i++) {
   let p = new PipeSet(MAX_HEIGHT, GAP_HEIGHT, 50);
   p.visible = false;
   pipes.push(p);

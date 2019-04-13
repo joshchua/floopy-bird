@@ -4,6 +4,8 @@ const PIPE_WIDTH = 10;
 const BIRD_WIDTH = 15;
 const BIRD_HEIGHT = (BIRD_WIDTH / 17) * 12;
 const GAP_HEIGHT = 30;
+const MAX_PIPES = 20;
+const PIPE_START_DIST = 200;
 
 export {
   MAX_HEIGHT,
@@ -11,5 +13,7 @@ export {
   PIPE_WIDTH,
   BIRD_WIDTH,
   BIRD_HEIGHT,
-  GAP_HEIGHT
+  GAP_HEIGHT,
+  MAX_PIPES,
+  PIPE_START_DIST
 };

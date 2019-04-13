@@ -38,7 +38,9 @@ import {
   PIPE_WIDTH,
   BIRD_WIDTH,
   BIRD_HEIGHT,
-  GAP_HEIGHT
+  GAP_HEIGHT,
+  MAX_PIPES,
+  PIPE_START_DIST
 } from "../utils/constants";
 import {
   detectAABBCollisionByBox,
@@ -89,12 +91,13 @@ const input$ = merge(
   )
 ).pipe(
   map<boolean, InputState>(b => ({ pressed: b })),
+  distinctUntilChanged(),
   startWith({ pressed: false })
 );
 
 const scene$ = new BehaviorSubject("main-menu");
 
-const newGame$ = scene$.pipe(filter(s => s == "main-menu"));
+const newGame$ = scene$.pipe(filter(s => s == "game", distinctUntilChanged()));
 
 merge(
   fromEvent(startGameBtn, "click").pipe(map(() => "game")),
@@ -133,7 +136,7 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
       bird.fallSpeed = 0;
       return bird;
     }
-    if (input.pressed == true) {
+    if (input.pressed == true && scene == "game") {
       bird.fallSpeed = 0;
       bird.ySpeed = -0.8;
     }
@@ -141,7 +144,7 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
     bird.fallSpeed += 0.04;
     const dy = -(bird.fallSpeed + bird.ySpeed);
 
-    if ((bird.y <= 0 && dy < 0) || (bird.y >= MAX_HEIGHT && dy > 0))
+    if ((bird.y <= BIRD_HEIGHT / 2 && dy < 0) || (bird.y >= MAX_HEIGHT && dy > 0))
       return bird;
 
     bird.y += dy;
@@ -152,20 +155,18 @@ const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
 
 const createPipe = (id: number): Pipe => ({
   id: id,
-  distance: 100,
-  gapPosition: Math.floor(Math.random() * (MAX_HEIGHT - 30)) + 15
+  distance: PIPE_START_DIST,
+  gapPosition: Math.floor(Math.random() * (MAX_HEIGHT - (0.4 * MAX_HEIGHT))) + ((0.4 * MAX_HEIGHT) / 2)
 });
 
 const createPipe$ = () =>
   interval(1500).pipe(
     scan<any, Pipe[]>((acc, val) => [...acc, createPipe(val)], []),
     combineLatestOperator(clock$, scene$),
-    map(([pipes, clock, scene], index) => {
-      if (index == 0) return pipes.filter(() => false);
+    map(([pipes, clock, scene]) => {
+      let current = pipes.filter(p => p.distance > -PIPE_START_DIST).slice(0, MAX_PIPES);
 
-      let current = pipes.filter(p => p.distance > -100).slice(0, 10);
-
-      if (scene == "game-over") return current.filter(p => p.distance < 100);
+      if (scene == "game-over") return current.filter(p => p.distance < PIPE_START_DIST);
 
       current.forEach(p => (p.distance -= PIPE_SPEED * msToS(clock.delta)));
       return current;
@@ -178,7 +179,7 @@ const pipes$ = newGame$.pipe(
   startWith<Pipe[]>([])
 );
 
-const calcScore = (pipes: Pipe[]) => {  
+const calcScore = (pipes: Pipe[]) => {
   if (pipes.length > 0) {
     const near = pipes.filter(p => p.distance > -10);
     return near[0].distance < 0 ? near[0].id + 1 : near[0].id;
@@ -226,7 +227,7 @@ const game$ = clock$.pipe(
         gameOver();
     }
 
-    if (state["bird"].y <= 0 && state["scene"] == "game") gameOver();
+    if (state["bird"].y <= BIRD_HEIGHT / 2 && state["scene"] == "game") gameOver();
   }),
   share()
 );
