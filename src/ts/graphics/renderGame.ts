@@ -64,7 +64,7 @@ scene.add(bird);
 let availPipes: number[] = [];
 let pipeMap = new Map<number, number>();
 let pipes: PipeSet[] = [];
-for (let i = 0; i < 7; i++) {
+for (let i = 0; i < 10; i++) {
   let p = new PipeSet(MAX_HEIGHT, GAP_HEIGHT, 50);
   p.visible = false;
   pipes.push(p);

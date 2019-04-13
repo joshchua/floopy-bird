@@ -159,10 +159,16 @@ const createPipe = (id: number): Pipe => ({
 const createPipe$ = () =>
   interval(1500).pipe(
     scan<any, Pipe[]>((acc, val) => [...acc, createPipe(val)], []),
-    combineLatestOperator(clock$),
-    map(([pipes, clock]) => {
-      pipes.forEach(p => (p.distance -= PIPE_SPEED * msToS(clock.delta)));
-      return pipes.filter(p => p.distance > -10).slice(0, 7);
+    combineLatestOperator(clock$, scene$),
+    map(([pipes, clock, scene], index) => {
+      if (index == 0) return pipes.filter(() => false);
+
+      let current = pipes.filter(p => p.distance > -100).slice(0, 10);
+
+      if (scene == "game-over") return current.filter(p => p.distance < 100);
+
+      current.forEach(p => (p.distance -= PIPE_SPEED * msToS(clock.delta)));
+      return current;
     }),
     startWith([])
   );
@@ -172,9 +178,10 @@ const pipes$ = newGame$.pipe(
   startWith<Pipe[]>([])
 );
 
-const calcScore = (pipes: Pipe[]) => {
+const calcScore = (pipes: Pipe[]) => {  
   if (pipes.length > 0) {
-    return pipes[0].distance < 0 ? pipes[0].id + 1 : pipes[0].id;
+    const near = pipes.filter(p => p.distance > -10);
+    return near[0].distance < 0 ? near[0].id + 1 : near[0].id;
   } else {
     return 0;
   }
@@ -189,17 +196,13 @@ const game$ = clock$.pipe(
     scene: scene,
     bird: bird,
     pipes: pipes,
-    score: ((s: string, p: Pipe[], sc: number): number => {
-      if (s == "main-menu") return 0;
-      else if (s == "game") return calcScore(p);
-      else return sc;
-    })(scene, pipes, this.score)
+    score: scene == "main-menu" ? 0 : calcScore(pipes)
   })),
   tap(state => {
     const gameOver = () => scene$.next("game-over");
 
     if (state["pipes"].length > 0 && state["scene"] == "game") {
-      const p = state["pipes"][0];
+      const p = state["pipes"].filter(p => p.distance > -10)[0];
       const top = topPipeBoundingBox(
         p.gapPosition,
         p.distance,
