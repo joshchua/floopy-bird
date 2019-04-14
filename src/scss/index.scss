@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css?family=Press+Start+2P");
+@import url("https://fonts.googleapis.com/css?family=Press+Start+2P|Cute+Font");
 
 html,
 body {
@@ -7,6 +7,12 @@ body {
   background: linear-gradient(to bottom, #82addb 0%, #ebb2b1 100%);
   overflow: hidden;
   font-family: "Press Start 2P";
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
 }
 
 canvas {
@@ -29,9 +35,21 @@ canvas {
 }
 
 button {
-  padding: 30px;
-  border-radius: 5px;
-  font-family: "Press Start 2P";
+  background-color: #bebebe;
+  font-family: "Cute Font" !important;
+  //font-style: italic;
+  padding: 10px;
+  border-style: solid;
+  border-width: 3px;
+  border-top-color: #faf8f3;
+  border-left-color: #faf8f3;
+  border-right-color: #95928b;
+  border-bottom-color: #95928b;
+  font-size: 45px;
+}
+
+button:hover {
+  cursor: pointer;
 }
 
 .mainMenu {
@@ -48,5 +66,46 @@ button {
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
+  }
+}
+.gameOver {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: 0 auto;
+  height: 100vh;
+  width: 300px;
+  justify-content: space-around;
+
+  h2 {
+    text-transform: uppercase;
+  }
+
+  div {
+    color: #fff;
+    height: 100px;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    text-align: center;
+  }
+}
+
+.hud {
+  position: relative;
+  margin: 0 auto;
+  height: 50vh;
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+
+  .score {
+    display: block;
+    padding: 10px 0;
+    color: white;
+    text-shadow: 2px 3px #000;
+    //background-color: rgba(0, 0, 0, 0.5);
+    font-size: 40px;
   }
 }

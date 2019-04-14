@@ -3,23 +3,25 @@
   <head>
     <meta charset="utf-8" />
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
   <body>
     <div class="overlay">
       <div class="mainMenu hidden">
         <img src=<%=require("./assets/img/logo.png") %> />
         <div>
-          <button class="startGame">Start Game</button>
+          <button class="startGame">Play</button>
           <button class="github">GitHub</button>
         </div>
       </div>
       <div class="gameOver hidden">
-        <h2>Game Over</h2>
+        <div>
+          <h2>Game Over</h2>
+          <p>Score: <span class="score"></span></p>
+        </div>
         <button>Play Again</button>
-        <p class="score"></p>
       </div>
       <div class="hud hidden">
-        <p>score:</p>
         <p class="score"></p>
       </div>
     </div>
