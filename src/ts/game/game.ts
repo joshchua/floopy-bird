@@ -5,9 +5,7 @@ import {
   merge,
   of,
   combineLatest,
-  timer,
-  BehaviorSubject,
-  Subject
+  BehaviorSubject
 } from "rxjs";
 import {
   scan,
@@ -15,19 +13,14 @@ import {
   startWith,
   combineLatest as combineLatestOperator,
   tap,
-  take,
   withLatestFrom,
-  throttleTime,
-  takeWhile,
   switchMapTo,
   filter,
   distinctUntilChanged,
   share,
-  multicast,
   delay,
   mapTo,
-  merge as mergeOperator,
-  switchMap
+  merge as mergeOperator
 } from "rxjs/operators";
 
 import { Tick } from "./models/Tick";
@@ -35,7 +28,6 @@ import { InputState } from "./models/InputState";
 import { GameState } from "./models/GameState";
 import { Bird } from "./models/Bird";
 import { Pipe } from "./models/Pipe";
-import { BoundingBox } from "./models/BoundingBox";
 import {
   MAX_HEIGHT,
   PIPE_SPEED,
@@ -52,7 +44,6 @@ import {
   bottomPipeBoundingBox,
   birdBoundingBox
 } from "../utils/collision";
-
 import {
   mainMenuDiv,
   gameOverDiv,
@@ -63,10 +54,16 @@ import {
   scoreDisplays
 } from "./domElements";
 
+/**
+ * Redirect to GitHub repo
+ */
 fromEvent(githubBtn, "click").subscribe(
   () => (window.location.href = "https://github.com/joshchua/floopy-bird")
 );
 
+/**
+ * The game clock that emits Tick objects on the animationFrameScheduler.
+ */
 const clock$ = interval(0, animationFrameScheduler).pipe(
   map<number, Tick>(() => {
     return {
@@ -79,9 +76,15 @@ const clock$ = interval(0, animationFrameScheduler).pipe(
     delta: current.time - previous.time
   }))
 );
-
+/**
+ * Convert milliseconds to seconds
+ * @param ms Milliseconds
+ */
 const msToS = (ms: number) => 0.001 * ms;
 
+/**
+ * Emits booleans representing keydowns and keyups. Filters keys that are held down.
+ */
 const keyboardInput$ = merge(
   fromEvent(document, "keydown"),
   fromEvent(document, "keyup")
@@ -105,31 +108,22 @@ const keyboardInput$ = merge(
     })()
   ),
   map(e => e.type == "keydown"),
-  mergeOperator(clock$.pipe(mapTo(false))),
+  mergeOperator(clock$.pipe(mapTo(false)))
 );
 
+/**
+ * Emit boolean when mouse is clicked.
+ */
 const mouseInput$ = fromEvent(document, "click").pipe(mapTo(true));
 
-const input$ = merge(
-  keyboardInput$,
-  mouseInput$,
-  keyboardInput$
-).pipe(
+/**
+ * Merge mouse and keyboard input with a mapped clock$, to ensure each emission from mouse and keyboard are followed after a false.
+ */
+const input$ = merge(keyboardInput$, mouseInput$, keyboardInput$).pipe(
   distinctUntilChanged(),
-  map<boolean, InputState>(b => ({ pressed: b })
-));
-
-//keyBoardInput$.subscribe(console.log);
-
-// const input$ = merge(
-//   fromEvent(document, "keydown").pipe(mapTo(true)),
-//   fromEvent(document, "keyup").pipe(mapTo(false))
-// ).pipe(
-//   map<boolean, InputState>(b => ({ pressed: b })),
-
-//   distinctUntilChanged(),
-//   startWith({ pressed: false })
-// );
+  startWith(false),
+  map<boolean, InputState>(b => ({ pressed: b }))
+);
 
 const scene$ = new BehaviorSubject("main-menu");
 
@@ -165,34 +159,36 @@ const initBird: Bird = {
   ySpeed: 0
 };
 
-const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
-  map(([bird, input, scene, clock]) => {
-    if (scene == "main-menu" || scene == "transition") {
-      bird.y = MAX_HEIGHT / 2;
-      bird.ySpeed = 0;
-      bird.fallSpeed = 0;
-      return bird;
-    }
-
-    if (input.pressed == true && scene == "game") {
-      bird.fallSpeed = 0;
-      bird.ySpeed = -0.8;
-    }
-
-    if (scene == "game") {
-      bird.fallSpeed += 0.04;
-      const dy = -(bird.fallSpeed + bird.ySpeed);
-      if (
-        (bird.y <= BIRD_HEIGHT / 2 && dy < 0) ||
-        (bird.y >= MAX_HEIGHT && dy > 0)
-      )
-        return bird;
-
-      bird.y += dy;
-    }
-
+const updateBird = (bird: Bird, input: InputState, scene: string) => {
+  if (scene == "main-menu" || scene == "transition") {
+    bird.y = MAX_HEIGHT / 2;
+    bird.ySpeed = 0;
+    bird.fallSpeed = 0;
     return bird;
-  })
+  }
+
+  if (input.pressed == true && scene == "game") {
+    bird.fallSpeed = 0;
+    bird.ySpeed = -0.8;
+  }
+
+  if (scene == "game") {
+    bird.fallSpeed += 0.04;
+    const dy = -(bird.fallSpeed + bird.ySpeed);
+    if (
+      (bird.y <= BIRD_HEIGHT / 2 && dy < 0) ||
+      (bird.y >= MAX_HEIGHT && dy > 0)
+    )
+      return bird;
+
+    bird.y += dy;
+  }
+
+  return bird;
+};
+
+const bird$ = combineLatest(of(initBird), input$, scene$, clock$).pipe(
+  map(([bird, input, scene]) => updateBird(bird, input, scene))
 );
 
 const createPipe = (id: number): Pipe => ({
@@ -203,24 +199,29 @@ const createPipe = (id: number): Pipe => ({
     (0.4 * MAX_HEIGHT) / 2
 });
 
+const updatePipe = (pipes: Pipe[], clock: Tick, scene: string) => {
+  let current = pipes
+    .filter(p => p.distance > -PIPE_START_DIST)
+    .slice(0, MAX_PIPES);
+
+  if (scene == "main-menu" || scene == "transition")
+    return current.filter(() => false);
+
+  if (scene == "game-over")
+    return current.filter(p => p.distance < PIPE_START_DIST);
+
+  current.forEach(p => (p.distance -= PIPE_SPEED * msToS(clock.delta)));
+  return current;
+};
+
+/**
+ * Create a new pipe$ observable.
+ */
 const createPipe$ = () =>
   interval(1500).pipe(
     scan<any, Pipe[]>((acc, val) => [...acc, createPipe(val)], []),
     combineLatestOperator(clock$, scene$),
-    map(([pipes, clock, scene]) => {
-      let current = pipes
-        .filter(p => p.distance > -PIPE_START_DIST)
-        .slice(0, MAX_PIPES);
-
-      if (scene == "main-menu" || scene == "transition")
-        return current.filter(() => false);
-
-      if (scene == "game-over")
-        return current.filter(p => p.distance < PIPE_START_DIST);
-
-      current.forEach(p => (p.distance -= PIPE_SPEED * msToS(clock.delta)));
-      return current;
-    }),
+    map(([pipes, clock, scene]) => updatePipe(pipes, clock, scene)),
     startWith([])
   );
 
@@ -238,8 +239,44 @@ const calcScore = (pipes: Pipe[]) => {
   }
 };
 
+const checkGameOver = (state: GameState) => {
+  const gameOver = () => scene$.next("game-over");
+
+  if (state["pipes"].length > 0 && state["scene"] == "game") {
+    const p = state["pipes"].filter(p => p.distance > -10)[0];
+    const top = topPipeBoundingBox(
+      p.gapPosition,
+      p.distance,
+      PIPE_WIDTH,
+      GAP_HEIGHT,
+      MAX_HEIGHT
+    );
+    const bottom = bottomPipeBoundingBox(
+      p.gapPosition,
+      p.distance,
+      PIPE_WIDTH,
+      GAP_HEIGHT
+    );
+    const b = state["bird"];
+    // For 2.5D play
+    //const bird = birdBoundingBox(BIRD_WIDTH, BIRD_HEIGHT, b.y);
+
+    // For 3D play
+    const bird = birdBoundingBox(BIRD_WIDTH / 2, BIRD_HEIGHT / 2, b.y);
+
+    if (
+      detectAABBCollisionByBox(bird, top) ||
+      detectAABBCollisionByBox(bird, bottom)
+    )
+      gameOver();
+  }
+
+  if (state["bird"].y <= BIRD_HEIGHT / 2 && state["scene"] == "game")
+    gameOver();
+};
+
 /**
- * An observable of GameStates
+ * An observable of GameStates that updates with every frame of requestAnimationFrame.
  */
 const game$ = clock$.pipe(
   withLatestFrom(scene$, bird$, pipes$),
@@ -249,44 +286,12 @@ const game$ = clock$.pipe(
     pipes: pipes,
     score: scene == "main-menu" ? 0 : calcScore(pipes)
   })),
-  tap(state => {
-    const gameOver = () => scene$.next("game-over");
-
-    if (state["pipes"].length > 0 && state["scene"] == "game") {
-      const p = state["pipes"].filter(p => p.distance > -10)[0];
-      const top = topPipeBoundingBox(
-        p.gapPosition,
-        p.distance,
-        PIPE_WIDTH,
-        GAP_HEIGHT,
-        MAX_HEIGHT
-      );
-      const bottom = bottomPipeBoundingBox(
-        p.gapPosition,
-        p.distance,
-        PIPE_WIDTH,
-        GAP_HEIGHT
-      );
-      const b = state["bird"];
-      // For 2.5D play
-      //const bird = birdBoundingBox(BIRD_WIDTH, BIRD_HEIGHT, b.y);
-
-      // For 3D play
-      const bird = birdBoundingBox(BIRD_WIDTH / 2, BIRD_HEIGHT / 2, b.y);
-
-      if (
-        detectAABBCollisionByBox(bird, top) ||
-        detectAABBCollisionByBox(bird, bottom)
-      )
-        gameOver();
-    }
-
-    if (state["bird"].y <= BIRD_HEIGHT / 2 && state["scene"] == "game")
-      gameOver();
-  }),
+  tap(checkGameOver),
   share()
 );
-
+/**
+ * Update score DOM elements with the latest score.
+ */
 game$
   .pipe(
     map(g => g.score),
