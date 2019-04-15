@@ -30,16 +30,6 @@ export class Cloud extends Group {
     tuft3.translate(0, 0, 0);
     geo.merge(tuft3);
 
-    const bufferGeometry = new BufferGeometry().fromGeometry(geo);
-
-    let cloud = new Mesh(
-      bufferGeometry,
-      new MeshLambertMaterial({
-        color: "white",
-        flatShading: true
-      })
-    );
-
     const map = (
       val: number,
       smin: number,
@@ -61,7 +51,15 @@ export class Cloud extends Group {
       geo.vertices.forEach((v: Vector3) => (v.y = Math.max(v.y, bottom)));
     chopBottom(geo, -0.5);
 
-    
+    const bufferGeometry = new BufferGeometry().fromGeometry(geo);
+
+    let cloud = new Mesh(
+      bufferGeometry,
+      new MeshLambertMaterial({
+        color: "white",
+        flatShading: true
+      })
+    );
 
     this.add(cloud);
   }
