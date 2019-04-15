@@ -1,7 +1,14 @@
-import * as THREE from "three";
+import {
+  BoxGeometry,
+  Geometry,
+  MeshLambertMaterial,
+  BufferGeometry,
+  Mesh,
+  Group
+} from "three";
 
-const createCube = (size: number): THREE.BoxGeometry => {
-  let geometry = new THREE.BoxGeometry(size, size, size);
+const createCube = (size: number): BoxGeometry => {
+  let geometry = new BoxGeometry(size, size, size);
   return geometry;
 };
 
@@ -9,25 +16,25 @@ const createPixelArtCell = (
   size: number,
   x: number,
   y: number
-): THREE.BoxGeometry => {
+): BoxGeometry => {
   let cell = createCube(size);
   cell.translate(x * size, y * size, 0);
   return cell;
 };
 
 const createPixelArtMesh = (
-  cells: THREE.BoxGeometry[],
+  cells: BoxGeometry[],
   color: number
-): THREE.Mesh => {
-  let geometry = new THREE.Geometry();
+): Mesh => {
+  let geometry = new Geometry();
   cells.forEach(cell => geometry.merge(cell), this);
   geometry.mergeVertices();
-  const material = new THREE.MeshLambertMaterial({ color: color });
-  const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
-  return new THREE.Mesh(bufferGeometry, material);
+  const material = new MeshLambertMaterial({ color: color });
+  const bufferGeometry = new BufferGeometry().fromGeometry(geometry);
+  return new Mesh(bufferGeometry, material);
 };
 
-export class Bird extends THREE.Group {
+export class Bird extends Group {
   constructor(width: number) {
     super();
 

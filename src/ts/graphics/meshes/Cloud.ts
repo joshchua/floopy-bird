@@ -1,6 +1,14 @@
-import * as THREE from "three";
+import {
+  Group,
+  Geometry,
+  SphereGeometry,
+  Mesh,
+  MeshLambertMaterial,
+  Vector3,
+  BufferGeometry
+} from "three";
 
-export class Cloud extends THREE.Group {
+export class Cloud extends Group {
   constructor(
     tuftRadius: number,
     tuftTranslation: number,
@@ -8,23 +16,25 @@ export class Cloud extends THREE.Group {
   ) {
     super();
 
-    const geo = new THREE.Geometry();
+    const geo = new Geometry();
 
-    const tuft1 = new THREE.SphereGeometry(tuftRadius, 7, 8);
+    const tuft1 = new SphereGeometry(tuftRadius, 7, 8);
     tuft1.translate(-tuftTranslation, 0, 0);
     geo.merge(tuft1);
 
-    const tuft2 = new THREE.SphereGeometry(tuftRadius, 7, 8);
+    const tuft2 = new SphereGeometry(tuftRadius, 7, 8);
     tuft2.translate(tuftTranslation, 0, 0);
     geo.merge(tuft2);
 
-    const tuft3 = new THREE.SphereGeometry(tuftRadius, 7, 8);
+    const tuft3 = new SphereGeometry(tuftRadius, 7, 8);
     tuft3.translate(0, 0, 0);
     geo.merge(tuft3);
 
-    let cloud = new THREE.Mesh(
-      geo,
-      new THREE.MeshLambertMaterial({
+    const bufferGeometry = new BufferGeometry().fromGeometry(geo);
+
+    let cloud = new Mesh(
+      bufferGeometry,
+      new MeshLambertMaterial({
         color: "white",
         flatShading: true
       })
@@ -38,7 +48,7 @@ export class Cloud extends THREE.Group {
       emax: number
     ) => ((emax - emin) * (val - smin)) / (smax - smin) + emin;
     //randomly displace the x,y,z coords by the `per` value
-    const jitter = (geo: THREE.Geometry, per: number) =>
+    const jitter = (geo: Geometry, per: number) =>
       geo.vertices.forEach(v => {
         v.x += map(Math.random(), 0, 1, -per, per);
         v.y += map(Math.random(), 0, 1, -per, per);
@@ -47,9 +57,11 @@ export class Cloud extends THREE.Group {
 
     jitter(geo, jitterDistance);
 
-    const chopBottom = (geo: THREE.Geometry, bottom: number) =>
-      geo.vertices.forEach((v: THREE.Vector3) => (v.y = Math.max(v.y, bottom)));
+    const chopBottom = (geo: Geometry, bottom: number) =>
+      geo.vertices.forEach((v: Vector3) => (v.y = Math.max(v.y, bottom)));
     chopBottom(geo, -0.5);
+
+    
 
     this.add(cloud);
   }

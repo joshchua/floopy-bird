@@ -1,5 +1,12 @@
-import * as THREE from "three";
-import "three-examples/controls/OrbitControls";
+import {
+  WebGLRenderer,
+  Scene,
+  PerspectiveCamera,
+  DirectionalLight,
+  AmbientLight,
+  Vector3
+} from "three";
+//import "three-examples/controls/OrbitControls";
 import * as TWEEN from "@tweenjs/tween.js";
 import { GameState } from "../game/models/GameState";
 import { World } from "./meshes/World";
@@ -7,23 +14,19 @@ import { PipeSet } from "./meshes/PipeSet";
 import { Bird } from "./meshes/Bird";
 import {
   MAX_HEIGHT,
-  PIPE_SPEED,
-  PIPE_WIDTH,
   BIRD_WIDTH,
-  BIRD_HEIGHT,
   GAP_HEIGHT,
   MAX_PIPES
 } from "../utils/constants";
-import { CameraHelper } from "three";
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const scene = new THREE.Scene();
+const scene = new Scene();
 renderer.setClearColor(0x000000, 0);
 
-const camera = new THREE.PerspectiveCamera(
+const camera = new PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
@@ -32,15 +35,13 @@ const camera = new THREE.PerspectiveCamera(
 
 //let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+const directionalLight = new DirectionalLight(0xffffff, 1);
 directionalLight.position.set(0, 70, 50);
 directionalLight.castShadow = true;
 scene.add(directionalLight);
 
-const ambientLight = new THREE.AmbientLight(0x404040);
+const ambientLight = new AmbientLight(0x404040);
 scene.add(ambientLight);
-
-
 
 window.addEventListener(
   "resize",
@@ -78,34 +79,49 @@ for (let i = 0; i < MAX_PIPES; i++) {
 let prevScene: string = "main-menu";
 
 const renderGameState = (state: GameState) => {
-
   if (state["scene"] != prevScene) {
     if (state["scene"] == "game-over") {
       new TWEEN.Tween(camera.position)
-      .to({x: 0, y: 50, z: 120}, 1000)
-      .onStart(() => bird.visible = true)
-      .start();
+        .to({ x: 0, y: 50, z: 120 }, 1000)
+        .onStart(() => (bird.visible = true))
+        .start();
 
-      new TWEEN.Tween(camera.rotation).to({
-        y: 0
-      }, 1000).start();
+      new TWEEN.Tween(camera.rotation)
+        .to(
+          {
+            y: 0
+          },
+          1000
+        )
+        .start();
     } else if (state["scene"] == "transition") {
-      new TWEEN.Tween(camera.position).to({
-        x: 0,
-        y: 50,
-        z: 0
-      }, 1000).start();
+      new TWEEN.Tween(camera.position)
+        .to(
+          {
+            x: 0,
+            y: 50,
+            z: 0
+          },
+          1000
+        )
+        .start();
 
-      new TWEEN.Tween(camera.rotation).to({
-        y: - Math.PI / 2
-      }, 1000).onComplete(() => bird.visible = false).start();
+      new TWEEN.Tween(camera.rotation)
+        .to(
+          {
+            y: -Math.PI / 2
+          },
+          1000
+        )
+        .onComplete(() => (bird.visible = false))
+        .start();
     }
 
     prevScene = state["scene"];
   }
 
   if (state["scene"] == "game") {
-    let pos = new THREE.Vector3();
+    let pos = new Vector3();
     pos.setFromMatrixPosition(bird.matrixWorld);
     camera.position.set(pos.x, pos.y, pos.z);
     camera.lookAt(pos.z + 100, pos.y, 0);
