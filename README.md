@@ -1,6 +1,6 @@
 # Floopy Bird
 
-![Floopy Bird Main Menu](./screenshots/main-menu.png)
+<p align="center"><img src="./screenshots/main-menu.png" width="300"></p>
 
 ## Introduction
 
